@@ -1,0 +1,34 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+entity testbench_PLU is
+end testbench_PLU;
+architecture behavioral of testbench_PLU is 
+component PLU
+port (  cases : in std_logic_vector ( 2 downto 0 );                                                                
+	fraction1resizedshifted: in std_logic_vector ( 15 downto 0);                                                     
+	fraction2resizedshifted : in std_logic_vector (15 downto 0 );                                                                                                               
+	PLU_Result : out std_logic_vector (15 downto 0)                                                                   
+	);                                                                                                              
+	end component;  
+	
+ signal cases :  std_logic_vector ( 2 downto 0 ) := (others => '0');                                                                
+ signal  fraction1resizedshifted :  std_logic_vector ( 15 downto 0) := (others => '0');                                                     
+ signal fraction2resizedshifted :  std_logic_vector (15 downto 0 ) := (others => '0');                                                                                                                 
+signal PLU_Result  :  std_logic_vector (15 downto 0)  ;                                                                                                              
+                                                      
+begin
+UUT :  PLU port map ( cases => cases,
+fraction1resizedshifted =>fraction1resizedshifted,
+fraction2resizedshifted=>fraction2resizedshifted,
+PLU_Result => PLU_Result );
+process
+begin
+
+cases <="000";
+fraction1resizedshifted <= x"0004";
+fraction2resizedshifted <= x"0005";
+
+wait ;
+end process;
+end;
