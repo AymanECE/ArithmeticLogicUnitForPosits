@@ -1,0 +1,89 @@
+library IEEE;
+use IEEE.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.PLU_package.all;
+
+
+
+entity FullPLU_TB is
+--  Port ( );
+end FullPLU_TB;
+
+architecture Behavioral of FullPLU_TB is
+component FullPLU
+port (              Posit1 : in std_logic_vector(nbofbits-1 downto 0 ); -- first posit
+                   Posit2 : in std_logic_vector(nbofbits-1 downto 0);
+                   nbofbitfractionn1: in std_logic_vector(nbofbitsforinteger downto 0);
+                   nbofbitfractionn2: in std_logic_vector(nbofbitsforinteger downto 0);
+                   nbofbitexponentt1: in std_logic_vector(nbofbitsforinteger downto 0);
+                   nbofbitexponentt2: in std_logic_vector(nbofbitsforinteger downto 0);
+                   add: in std_logic;
+                   Posit4 : out std_logic_vector(nbofbits-1 downto 0 );
+                    es : in std_logic_vector(nbofbitsforinteger downto 0)
+                    );
+end component;
+
+signal Posit1 :  std_logic_vector(nbofbits-1 downto 0 ); -- first posit
+signal                   Posit2 :  std_logic_vector(nbofbits-1 downto 0);
+signal                   nbofbitfractionn1:  std_logic_vector(nbofbitsforinteger downto 0);
+signal                   nbofbitfractionn2:  std_logic_vector(nbofbitsforinteger downto 0);
+signal                   nbofbitexponentt1:  std_logic_vector(nbofbitsforinteger downto 0);
+signal                   nbofbitexponentt2:  std_logic_vector(nbofbitsforinteger downto 0);
+signal                   add:  std_logic;
+signal                   Posit4 :  std_logic_vector(nbofbits-1 downto 0 );
+signal                   es : std_logic_vector(nbofbitsforinteger downto 0 );
+begin
+U1 : FullPLU port map ( 
+                Posit1,
+                 Posit2,
+                 nbofbitfractionn1,
+                 nbofbitfractionn2,
+                 nbofbitexponentt1,
+                 nbofbitexponentt2,
+                 add,
+                 Posit4 ,
+                 es);
+process
+ begin
+        wait for 100ns;
+       --Posit1 <=  "0111011001110110";
+       --Posit2 <=   "0111100101001011"; 
+       
+       --nbofbitfractionn2 <= "00000000000000111";
+       --nbofbitfractionn1 <= "00000000000001000";
+       --nbofbitexponentt2 <= "00000000000000011";
+       --nbofbitexponentt1 <= "00000000000000011"; 
+       --add<='1';
+       
+       --  Posit1 <=  "1000111001110110";
+         --  Posit2 <=   "0111100101001011"; 
+             
+           --nbofbitfractionn2 <= "00000000000000111";
+             --nbofbitfractionn1 <= "00000000000001000";
+            -- nbofbitexponentt2 <= "00000000000000011";
+             --nbofbitexponentt1 <= "00000000000000011"; 
+             --add<='1';
+             
+                       Posit1 <=  "1000000000000100";
+                       Posit2 <=   "0111100101001011"; 
+                         
+                         nbofbitfractionn1 <= "00000000000000000";
+                         nbofbitfractionn2 <= "00000000000001000";
+                         nbofbitexponentt1 <= "00000000000000011";
+                         nbofbitexponentt2 <= "00000000000000011"; 
+                                          es <="00000000000000100";
+                         add<='1';
+                                     
+       wait for 100ns;
+     --  Posit1 <=          "0111101110000010";
+           --   Posit2 <=   "0111101011000111";   
+           --   nbofbitfractionn2 <= "00000000000000111";
+           --   nbofbitfractionn1 <= "00000000000000111";
+           --   nbofbitexponentt2 <= "00000000000000011";
+          --    nbofbitexponentt1 <= "00000000000000011"; 
+        --      add<='0';
+              wait;
+       end process;
+end Behavioral;
