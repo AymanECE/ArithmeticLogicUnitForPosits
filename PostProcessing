@@ -1,0 +1,248 @@
+[11:14 AM, 3/8/2021] Ayman Matar: ibrary IEEE;
+use IEEE.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.PLU_package.all;
+
+entity PLU is 
+
+port (  nbofbitfractionn1 : in std_logic_vector( nbofbitsforinteger downto 0 );
+        nbofbitfractionn2 : in std_logic_vector( nbofbitsforinteger downto 0 );
+        cases: in std_logic_vector ( 2 downto 0 ); 
+		fraction1resizedshifted: in std_logic_vector ( nbofbits-1 downto 0);
+		fraction2resizedshifted : in std_logic_vector (nbofbits-1 downto 0 );
+		PLU_Result: out std_logic_vector (nbofbits-1 downto 0);
+		flag1forexponent : out std_logic;
+		flag2forexponent : out std_logic
+		);
+		end PLU;
+architecture PLUarchi of PLU is
+begin
+
+process(cases,fraction1resizedshifted,fraction2resizedshifted) 
+variable fraction1addedto1: std_logic_vector(nbofbits-1 downto 0);
+variable fraction2addedto1: std_logic_vector(nbofbits-1 downto 0);
+variable nbofbitfraction1 : integer;
+variable nbofbitfraction2 : integer;
+begin
+nbofbitfraction1 := to_integer(unsigned(nbofbitfractionn1));
+nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2));
+
+flag1forexponent <= '0';
+flag2forexponent <='0';
+--if( to_integer(unsigned(fraction1resizedshifted))  > to_integer(unsigned(fraction2resizedshifted)) )then 
+	case(cases) is --Make sure that A is always > B, that way we can reduce the statements and take the sign of A
+	
+	when ( "000" ) => --  A+B or -A - B                                                                               
+   PLU_Result <= std_logic_vector(unsigned(fraction1resizedshifted)+unsigned(fraction2resizedshifted)) ;
+  
+  
+    when ("001") => --Subtract A-B 
+    if( to_integer(unsigned(fraction1resizedshifted))  > to_integer(unsigned(fraction2resizedshifted)) )then 
+	   PLU_Result <= std_logic_vector(unsigned(fraction1resizedshifted)-unsigned(fraction2resizedshifted)) ;
+	else 
+	    -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+	   fraction1addedto1 := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction1));
+
+	   fraction1addedto1 := std_logic_vector(unsigned(fraction1addedto1)-unsigned(fraction2resizedshifted)) ; --Now do the subtraction
+	   fraction1addedto1 := std_logic_vector( shift_left(unsigned(fraction1addedto1),1)); -- So I shift to the left and decrement my exponent by 1 which will be done in postprocessing
+	   PLU_Result <= std_logic_vector( unsigned(fraction1addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction1));
+	   flag1forexponent <= '1'; --flsg to decrement later on in postprocessing
+	    
+	  end if;
+	  
+	  
+	 when ( "011") => -- B- A
+	 PLU_Result <= std_logic_vector( unsigned(fraction2resizedshifted) - unsigned(fraction1resizedshifted));
+	  if( to_integer(unsigned(fraction2resizedshifted))  > to_integer(unsigned(fraction1resizedshifted)) )then 
+           PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
+        else 
+            fraction2addedto1 := std_logic_vector(unsigned(fraction2resizedshifted) + shift_left(to_unsigned( 1, nbofbits),nbofbitfraction2));
+
+             fraction2addedto1 := std_logic_vector(unsigned(fraction2addedto1)-unsigned(fraction1resizedshifted)) ; --Now do the subtraction
+             fraction2addedto1 := std_logic_vector( shift_left(unsigned(fraction2addedto1),1)); -- So I shift to the left and decrement my exponent by 1 which will be done in postprocessing
+              PLU_Result <= std_logic_vector( unsigned(fraction2addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction2));
+             flag2forexponent <= '1'; --flsg to decrement later on in postprocessing
+          end if ;
+	
+	
+	  when others => PLU_Result <= "1111111111111111";
+	   
+	  
+	 end case;
+--else 
+
+	--case(cases) is -- Here B is > A, so i can do B-A
+--	when ("000" or "010") => -- Addition
+  -- PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)+unsigned(fraction1resizedshifted)) ;
+   
+  --  when ("011") => --B -A , what  if i wan to do A - B and B is bigger than A then i Do B- A and 
+  --   PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
+ 
+	--when others => PLU_Result <= "1111111111111111";
+	
+	-- end case;
+
+--end if; 
+
+end process;
+end PLUarchi;
+[11:14 AM, 3/8/2021] Ayman Matar: library IEEE;
+use IEEE.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.PLU_package.all;
+
+entity Postprocessing is 
+port (  
+		Posit1 : in std_logic_vector(nbofbits-1 downto 0);
+		Posit2 : in std_logic_vector(nbofbits-1 downto 0);
+		Positt3 : in std_logic_vector(nbofbits-1 downto 0); -- this just contains the fraction bit
+	    totalexponent1 : in std_logic_vector(nbofbitsforinteger downto 0 );
+	    totalexponent2 : in std_logic_vector(nbofbitsforinteger downto 0 );
+		nbofbitfractionn1 : in std_logic_vector(nbofbitsforinteger downto 0);
+		nbofbitfractionn2 : in std_logic_vector(nbofbitsforinteger downto 0);
+		nbofbitexponentt1 : in std_logic_vector(nbofbitsforinteger downto 0);
+		nbofbitexponentt2 : in std_logic_vector(nbofbitsforinteger downto 0);
+		nbofregimebitt1 :in std_logic_vector(nbofbitsforinteger downto 0);
+		nbofregimebitt2 : in std_logic_vector(nbofbitsforinteger downto 0);
+		expo1valuee : in std_logic_vector(nbofbitsforinteger downto 0);
+		expo2valuee : in std_logic_vector(nbofbitsforinteger downto 0);
+		cases : in std_logic_vector ( 2 downto 0 );
+		Posit4 : out std_logic_vector(nbofbits-1 downto 0 ); -- this is the final output
+		flag1forexponent : in std_logic;
+		flag2forexponent : in std_logic
+		);
+		end Postprocessing;
+		
+architecture Postprocessingarchi of Postprocessing is
+
+begin
+process(Posit1,Posit2,Positt3)
+
+variable exponent1 : std_logic_vector(nbofbitsforinteger downto 0 ) ; 
+
+variable exponent2 : std_logic_vector(nbofbitsforinteger downto 0 ) ; 
+variable nbofbitfraction1 :  integer;
+variable nbofbitfraction2 :   integer;
+variable nbofbitexponent1 :  integer;
+variable nbofbitexponent2 :  integer;
+variable nbofregimebit1 : integer;
+variable nbofregimebit2 :  integer;
+variable expo1value :  integer;
+variable expo2value :  integer;
+variable posit3: std_logic_vector(nbofbits -1 downto 0 );
+variable totalexponentt1 : integer;
+variable totalexponentt2 : integer;
+variable Posit4forinverse : std_logic_vector(nbofbits-1 downto 0 );
+begin
+
+
+ nbofbitfraction1 := to_integer(unsigned(  nbofbitfractionn1)) ;
+ nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2)) ;
+ nbofbitexponent1 := to_integer(unsigned(nbofbitexponentt1)) ;
+ nbofbitexponent2 := to_integer(unsigned(nbofbitexponentt2)) ;
+ nbofregimebit1 := to_integer(unsigned(nbofregimebitt1)) ;
+ nbofregimebit2 := to_integer(unsigned(nbofregimebitt2)) ;
+ expo1value :=  to_integer(unsigned(expo1valuee)) ;
+ expo2value := to_integer(unsigned(expo2valuee)) ;
+
+posit3 := Positt3;
+totalexponentt1 := to_integer(unsigned(totalexponent1));
+totalexponentt2 := to_integer(unsigned(totalexponent2));
+
+if flag1forexponent = '1' then
+totalexponentt1 := totalexponentt1 - 1;
+if expo1value =0 then
+expo1value :=1 ;
+end if;
+expo1value := expo1value -1 ;
+end if;
+ 
+
+
+if flag2forexponent = '1' then
+totalexponentt2 := totalexponentt2 - 1;
+if expo2value =0 then
+expo2value :=1 ;
+end if;
+expo2value := expo2value -1 ;
+end if;
+exponent1 := std_logic_vector(to_unsigned(expo1value, nbofbitsforinteger+1 ));
+exponent2 := std_logic_vector(to_unsigned(expo2value, nbofbitsforinteger+1));
+
+	if (totalexponentt1>totalexponentt2)  and ( Positt3(nbofbitfraction1+1) = '1')  then --This means my fraction overflowed, so add one to the value of exponent
+		expo1value := expo1value+1 ; 
+		exponent1:= std_logic_vector(to_unsigned(expo1value, nbofbitsforinteger+1));
+		posit3 := std_logic_vector(shift_right(unsigned(Positt3),1));
+		if exponent1(nbofbitexponent1) = '1' then -- my exponent value overflowed so change exponent to a series of 1s and fractions too.
+            posit3 := std_logic_vector(to_signed(-1,nbofbits));
+            exponent1 := std_logic_vector(to_signed(-1,nbofbitsforinteger+1)); 
+                                            
+			expo1value:=0 ;
+		end if;
+	end if;
+	
+	if (totalexponentt2>totalexponentt1)  and ( Positt3(nbofbitfraction2+1) = '1')  then --This means my fraction overflowed, so add one to the value of exponent
+		expo2value := expo2value+1 ; 
+		exponent2:= std_logic_vector(to_unsigned(expo2value, nbofbitsforinteger+1));
+		posit3 := std_logic_vector(shift_right(unsigned(Positt3),1));
+		if exponent2(nbofbitexponent2) = '1' then -- my exponent value overflowed so subtract one from fraction and add one to regime bits
+			posit3 := std_logic_vector(to_signed(-1,nbofbits));
+			exponent2 := std_logic_vector(to_signed(-1,nbofbitsforinteger+1));
+			expo2value :=0;
+		end if;
+	end if;
+	
+	if Posit1(nbofbits-2) ='0' and totalexponentt1>totalexponentt2  then
+		Posit4forinverse := '0' & std_logic_vector(to_unsigned(0,nbofregimebit1)) & '1' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1 downto 0 );
+		Posit4<= '0' & std_logic_vector(to_unsigned(0,nbofregimebit1)) & '1' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1 downto 0 );
+	end if;
+
+
+	if   Posit1(nbofbits-2) ='1' and totalexponentt1>totalexponentt2  then
+	Posit4forinverse := '0' & std_logic_vector(to_signed(-1,nbofregimebit1)) & '0' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1  downto 0 );
+		Posit4<= '0' & std_logic_vector(to_signed(-1,nbofregimebit1)) & '0' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1  downto 0 );
+	end if; 
+
+
+	if  Posit2(nbofbits-2) ='0' and totalexponentt2>totalexponentt1  then	
+	Posit4forinverse := '0' & std_logic_vector(to_unsigned(0,nbofregimebit2)) & '1' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
+		Posit4<= '0' & std_logic_vector(to_unsigned(0,nbofregimebit2)) & '1' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
+	end if; 
+
+
+
+	if  Posit2(nbofbits-2) ='1' and totalexponentt2>totalexponentt1 then	
+	Posit4forinverse :=	 '0' & std_logic_vector(to_signed(-1,nbofregimebit2)) & '0' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
+		Posit4<= '0' & std_logic_vector(to_signed(-1,nbofregimebit2)) & '0' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
+	end if; 
+	
+	
+	
+
+        
+    if totalexponent1> totalexponent2 and nbofbitfraction1 = 0 then 
+        Posit4 <= '0' & std_logic_vector(to_unsigned(0,nbofregimebit1)) & '1' &  exponent1(nbofbitexponent1-1 downto 0 ) ;
+        elsif totalexponent2>totalexponent1 and nbofbitfraction2 = 0 then
+        Posit4 <= '0' & std_logic_vector(to_unsigned(0,nbofregimebit2)) & '1' &  exponent2(nbofbitexponen2-1 downto 0 ) ;
+
+end if;
+	
+	if Posit1(nbofbits-1) ='1' and totalexponentt1>totalexponentt2  then
+
+           Posit4 <= std_logic_vector(to_unsigned(to_integer(unsigned(Not Posit4forinverse))+1,nbofbits));
+           
+       end if;
+    
+    
+        if Posit2(nbofbits-1) ='1' and totalexponentt2>totalexponentt1  then
+            Posit4 <= std_logic_vector(to_unsigned(to_integer(unsigned(Not Posit4forinverse))+1,nbofbits));
+                    
+        end if;  
+        
+end process;
+
+end Postprocessingarchi ;
