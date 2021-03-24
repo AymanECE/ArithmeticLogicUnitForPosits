@@ -9,12 +9,18 @@ entity PLU is
 
 port (  nbofbitfractionn1 : in std_logic_vector( nbofbitsforinteger downto 0 );
         nbofbitfractionn2 : in std_logic_vector( nbofbitsforinteger downto 0 );
-        cases: in std_logic_vector ( 2 downto 0 ); 
+        cases: in std_logic_vector ( 3 downto 0 ); 
 		fraction1resizedshifted: in std_logic_vector ( nbofbits-1 downto 0);
 		fraction2resizedshifted : in std_logic_vector (nbofbits-1 downto 0 );
 		PLU_Result: out std_logic_vector (nbofbits-1 downto 0);
 		flag1forexponent : out std_logic;
-		flag2forexponent : out std_logic
+		flag2forexponent : out std_logic;
+		howmuchtoshiftsubtract : out std_logic_vector(nbofbits-1 downto 0 );
+		Flag1ForSubtraction : out std_logic ;
+		   totalexponent1 : in std_logic_vector(nbofbitsforinteger downto 0 );
+             totalexponent2 : in std_logic_vector(nbofbitsforinteger downto 0 );
+             fractionformultiplicationn : out std_logic_vector(nbofbitsformultiplication -1 downto 0 )
+         
 		);
 		end PLU;
 architecture PLUarchi of PLU is
@@ -25,66 +31,219 @@ variable fraction1addedto1: std_logic_vector(nbofbits-1 downto 0);
 variable fraction2addedto1: std_logic_vector(nbofbits-1 downto 0);
 variable nbofbitfraction1 : integer;
 variable nbofbitfraction2 : integer;
+variable howmuch: integer := 0 ;
+variable fractionformultiplication : std_logic_vector(nbofbitsformultiplication-1 downto 0 ); --Note here that multiplication might overflow so need enough bits to represent the multiplication of fraction.
+variable nbofbitfractionaftermultiplication : integer;
+variable fraction1formultiplication : std_logic_vector(nbofbitsformultiplication-1 downto 0 );
+variable fraction2formultiplication : std_logic_vector(nbofbitsformultiplication -1 downto 0 );
+variable quotient : integer; 
+variable remainder : std_logic_vector( nbofbits-1 downto 0 );
+variable remainderdivided : std_logic_vector(nbofbits-1 downto 0 );
+variable totalexponentt : integer;
+variable quotientaddedtoremainder: std_logic_vector(nbofbits -1 downto 0 ); 
 begin
 nbofbitfraction1 := to_integer(unsigned(nbofbitfractionn1));
 nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2));
 
 flag1forexponent <= '0';
 flag2forexponent <='0';
---if( to_integer(unsigned(fraction1resizedshifted))  > to_integer(unsigned(fraction2resizedshifted)) )then 
+ if (to_integer(signed(totalexponent1))>=to_integer(signed(totalexponent2))) or (cases = "0100") or (cases="1000")  then
 	case(cases) is --Make sure that A is always > B, that way we can reduce the statements and take the sign of A
 	
-	when ( "000" ) => --  A+B or -A - B                                                                               
+	when ( "0000" ) => --  A+B or -A - B                                                                               
    PLU_Result <= std_logic_vector(unsigned(fraction1resizedshifted)+unsigned(fraction2resizedshifted)) ;
   
   
-    when ("001") => --Subtract A-B 
-    if( to_integer(unsigned(fraction1resizedshifted))  > to_integer(unsigned(fraction2resizedshifted)) )then 
+    when ("0001") => --Subtract A-B knowing that totalexponent(A) > totalexponent(B)
+    if( to_integer(unsigned(fraction1resizedshifted))  >= to_integer(unsigned(fraction2resizedshifted)) )then -- FA > FB so subtract normally
 	   PLU_Result <= std_logic_vector(unsigned(fraction1resizedshifted)-unsigned(fraction2resizedshifted)) ;
-	else 
+	else  -- This means FB > FA but TEA > TEB
 	    -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-	   fraction1addedto1 := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction1));
+	--I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+               fraction1addedto1 := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction1));
+ 
+        fraction1addedto1 := std_logic_vector(unsigned(fraction1addedto1)-unsigned(fraction2resizedshifted)) ; --Now do the subtraction
+      -- Now I need to extract the + 1 from above.
+               for i in  0 to nbofbits loop
+                   if to_integer(unsigned(fraction1addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction1)) then
+                   
+                   fraction1addedto1 := std_logic_vector(shift_left(unsigned(fraction1addedto1),1));
+                   howmuch :=howmuch + 1;
+                   end if;
+                   end loop;
 
-	   fraction1addedto1 := std_logic_vector(unsigned(fraction1addedto1)-unsigned(fraction2resizedshifted)) ; --Now do the subtraction
-	   fraction1addedto1 := std_logic_vector( shift_left(unsigned(fraction1addedto1),1)); -- So I shift to the left and decrement my exponent by 1 which will be done in postprocessing
-	   PLU_Result <= std_logic_vector( unsigned(fraction1addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction1));
-	   flag1forexponent <= '1'; --flsg to decrement later on in postprocessing
+            --   fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1)); -- The reason i shift right is because it overshoots when it is shifting in the for loop
+               PLU_Result <= std_logic_vector( unsigned(fraction1addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction1));
+               --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
+               flag1forexponent <= '1'; --flsg to decrement later on in postprocessing
+               howmuchtoshiftsubtract <= std_logic_vector(to_unsigned(howmuch,nbofbits));
 	    
 	  end if;
 	  
 	  
-	 when ( "011") => -- B- A
-	 PLU_Result <= std_logic_vector( unsigned(fraction2resizedshifted) - unsigned(fraction1resizedshifted));
-	  if( to_integer(unsigned(fraction2resizedshifted))  > to_integer(unsigned(fraction1resizedshifted)) )then 
+	 when ( "0011") => -- B- A remember here total exponent A is > total exponent B, so do A - B and take the inverse by flagging for the posit processing unit 
+ if( to_integer(unsigned(fraction2resizedshifted))  >= to_integer(unsigned(fraction1resizedshifted)) )then 
            PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
         else 
-            fraction2addedto1 := std_logic_vector(unsigned(fraction2resizedshifted) + shift_left(to_unsigned( 1, nbofbits),nbofbitfraction2));
+            -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+        --I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+                   fraction1addedto1 := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction1));
 
-             fraction2addedto1 := std_logic_vector(unsigned(fraction2addedto1)-unsigned(fraction1resizedshifted)) ; --Now do the subtraction
-             fraction2addedto1 := std_logic_vector( shift_left(unsigned(fraction2addedto1),1)); -- So I shift to the left and decrement my exponent by 1 which will be done in postprocessing
-              PLU_Result <= std_logic_vector( unsigned(fraction2addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction2));
-             flag2forexponent <= '1'; --flsg to decrement later on in postprocessing
+                    howmuch := 0 ;
+            fraction1addedto1 := std_logic_vector(unsigned(fraction1addedto1)-unsigned(fraction2resizedshifted)) ; --Now do the subtraction
+          
+                   for i in  0 to nbofbits loop
+                       if to_integer(unsigned(fraction1addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction1)) then
+                       
+                       fraction1addedto1 := std_logic_vector(shift_left(unsigned(fraction1addedto1),1));
+                       howmuch :=howmuch + 1;
+                       end if;
+                       end loop;
+                 --   howmuchtosubtract <= std_logic_vector(to_unsigned(howmuch-1,nbofbits));
+                 --  fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1));
+                   PLU_Result <= std_logic_vector( unsigned(fraction1addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction1));
+                   --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
+                   flag1forexponent <= '1'; --flsg to decrement later on in postprocessing
+                   howmuchtoshiftsubtract <= std_logic_vector(to_unsigned(howmuch,nbofbits));
+                   Flag1ForSubtraction <= '1'; -- remember i am doing B- A and not A-B, so need to take inverse of this result obtained
+             
+	end if;
+	
+	
+	
+	
+	when  ("0100")=>
+	   fraction1formultiplication := std_logic_vector(resize(unsigned(fraction1resizedshifted),nbofbitsformultiplication));
+		
+ fraction2formultiplication := std_logic_vector(resize(unsigned(fraction2resizedshifted),nbofbitsformultiplication));
+              
+	fractionformultiplication := std_logic_vector(unsigned(fraction1resizedshifted) * unsigned(fraction2resizedshifted));
+    fractionformultiplicationn <= fractionformultiplication ;
+	   
+	  when ("1000") => 
+
+        fraction1addedto1 := fraction1resizedshifted;
+	   if unsigned(fraction1resizedshifted) >= unsigned(fraction2resizedshifted) then -- so i can move on 
+	        quotient := to_integer(unsigned(fraction1resizedshifted)/unsigned(fraction2resizedshifted));
+             remainder := std_logic_vector(unsigned(fraction1resizedshifted) mod unsigned( fraction2resizedshifted)); 
+        else  -- i will need to shift fractoin1addedto1 until its bigger than fraction2
+       
+       
+                for i in (nbofbitfraction1 -1 ) downto 0 loop   -- shifting fraction1 until it is bigger than fraction 2
+                if unsigned(fraction1addedto1) < unsigned(fraction2resizedshifted) then
+                    fraction1addedto1 := std_logic_vector(shift_left(unsigned(fraction1addedto1),1));
+                     howmuch := howmuch +1 ;
+                 end if ;
+                 end loop; 
+         quotient := to_integer(unsigned(fraction1addedto1)/unsigned(fraction2resizedshifted));
+       remainder := std_logic_vector(unsigned(fraction1addedto1) mod unsigned( fraction2resizedshifted)); 
           end if ;
-	
-	
+         
+
+	   
+            for i in  (nbofbits -1 ) downto 0 loop 
+                         remainder := std_logic_vector(shift_left(unsigned(remainder),1));
+                     if unsigned(remainder) < unsigned(fraction2resizedshifted) then   
+            
+                       remainderdivided(i) := '0';
+                       else
+                       remainderdivided(i) := '1';
+                       remainder := std_logic_vector(unsigned(remainder) mod unsigned(fraction2resizedshifted)) ; 
+                       
+                       end if;
+               end loop;
+    
+                  if quotient > 1 then 
+                  howmuch := howmuch - (quotient - 1 ) ; 
+                  end if ; 
+
+	   PLU_Result <= remainderdivided;
+	   howmuchtoshiftsubtract <= std_logic_vector( to_signed( howmuch,nbofbits)) ;
+	   
+	   when others => PLU_Result <= "1111111111111111";
+              
+	 end case;
+	 
+	 
+	 
+else 
+
+
+
+	case(cases) is -- Here we have totalexponent (B) >totalexponent(A))
+	when ( "0000" ) => --  A+B or -A - B                                                                               
+   PLU_Result <= std_logic_vector(unsigned(fraction1resizedshifted)+unsigned(fraction2resizedshifted)) ;
+  
+  
+    when ("0011") => --Subtract B-A knowing that totalexponent(B) > totalexponent(A)
+    if( to_integer(unsigned(fraction2resizedshifted))  >= to_integer(unsigned(fraction1resizedshifted)) )then -- FA > FB so subtract normally
+	   PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
+	else  -- This means FB > FA but TEA > TEB
+	    -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+	--I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+               fraction2addedto1 := std_logic_vector(unsigned(fraction2resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction2));
+
+                howmuch := 0 ;
+  
+        fraction2addedto1 := std_logic_vector(unsigned(fraction2addedto1)-unsigned(fraction1resizedshifted)) ; --Now do the subtraction
+      -- Now I need to extract the + 1 from above.
+               for i in  0 to nbofbits loop
+                   if to_integer(unsigned(fraction2addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction2)) then
+                   
+                   fraction2addedto1 := std_logic_vector(shift_left(unsigned(fraction2addedto1),1));
+                   howmuch :=howmuch + 1;
+                   end if;
+                   end loop;
+
+            --   fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1)); -- The reason i shift right is because it overshoots when it is shifting in the for loop
+               PLU_Result <= std_logic_vector( unsigned(fraction2addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction2));
+               --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
+               flag2forexponent <= '1'; --flsg to decrement later on in postprocessing
+               howmuchtoshiftsubtract <= std_logic_vector(to_unsigned(howmuch,nbofbits));
+	    
+	  end if;
+	  
+	  
+	 when ( "0001") => -- A - B knowing totalexponent(B)>totalexponent(A) , so do B - A and take inverse later on
+  if( to_integer(unsigned(fraction2resizedshifted))  >= to_integer(unsigned(fraction1resizedshifted)) )then -- FA > FB so subtract normally
+           PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
+       
+       
+        else  -- This means FB > FA but TEA > TEB
+            -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+        --I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+                   fraction2addedto1 := std_logic_vector(unsigned(fraction2resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction2));
+    
+                    howmuch := 0 ;
+      
+            fraction2addedto1 := std_logic_vector(unsigned(fraction2addedto1)-unsigned(fraction1resizedshifted)) ; --Now do the subtraction
+          -- Now I need to extract the + 1 from above.
+                   for i in  0 to nbofbits loop
+                       if to_integer(unsigned(fraction2addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction2)) then
+                       
+                       fraction2addedto1 := std_logic_vector(shift_left(unsigned(fraction2addedto1),1));
+                       howmuch :=howmuch + 1;
+                       end if;
+                       end loop;
+    
+                --   fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1)); -- The reason i shift right is because it overshoots when it is shifting in the for loop
+                   PLU_Result <= std_logic_vector( unsigned(fraction2addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction2));
+                   --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
+                   flag2forexponent <= '1'; --flsg to decrement later on in postprocessing
+                   howmuchtoshiftsubtract <= std_logic_vector(to_unsigned(howmuch,nbofbits));
+             Flag1ForSubtraction <= '1'; -- I am doing A- B not B- A so i need to flag so that i can take care of this later on
+          end if;
+          
+          
+ 
+          
+          
+          
 	  when others => PLU_Result <= "1111111111111111";
 	   
 	  
 	 end case;
---else 
-
-	--case(cases) is -- Here B is > A, so i can do B-A
---	when ("000" or "010") => -- Addition
-  -- PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)+unsigned(fraction1resizedshifted)) ;
-   
-  --  when ("011") => --B -A , what  if i wan to do A - B and B is bigger than A then i Do B- A and 
-  --   PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
- 
-	--when others => PLU_Result <= "1111111111111111";
-	
-	-- end case;
-
---end if; 
+	 end if;
 
 end process;
 end PLUarchi;
