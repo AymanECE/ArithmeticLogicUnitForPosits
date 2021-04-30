@@ -3,48 +3,16 @@ use IEEE.std_logic_1164.all;
 use ieee.numeric_std.all;
 package PLU_package is
 
- constant nbofbits : integer :=16;
- constant  nbofbitsforinteger : integer :=16;
-constant nbofbitsformultiplication : integer := 32;
-procedure power (
-	
-	    signal Clock :  in  std_logic;
-  exponent:  in  std_logic_vector (nbofbitsforinteger downto 0);
-   number :  in   std_logic_vector(nbofbits-1 downto 0);
-   result :  out std_logic_vector(nbofbits-1 downto 0);
-    flag :  out std_logic );
+ constant nbofbits : natural :=16;
+ constant  nbofbitsforinteger : natural :=16;
+constant nbofbitsformultiplication : natural := 32;
+
 end package PLU_package;
 
 package body PLU_package is
 
  
-procedure power (
-    signal Clock :  in  std_logic;
-     exponent:  in  std_logic_vector (nbofbitsforinteger downto 0);
-	  number :  in   std_logic_vector(nbofbits-1 downto 0);
-	  result :  out std_logic_vector(nbofbits-1 downto 0);
-	   flag :  out std_logic
-	) is 
-	variable i: integer:=0;
-    variable resultt : integer:=1;
-	begin 
 
 
-        if rising_edge(Clock) then 
-            --for i in 0 to (to_integer(signed(exponent))-1) loop 
-                if i <(to_integer(unsigned(exponent))-1) then
-                resultt := resultt * to_integer(signed(number) );
-                i := i+1;
-                else 
-                result :=std_logic_vector(to_unsigned(resultt,nbofbits));
-                flag :='1';
-                end if;
-             end if;
-            --end loop;
 
-
-	
-    end power ;
-
-
-end package body PLU_package
+end package body PLU_package;
