@@ -19,125 +19,317 @@ port (  nbofbitfractionn1 : in std_logic_vector( nbofbitsforinteger downto 0 );
 		Flag1ForSubtraction : out std_logic ;
 		   totalexponent1 : in std_logic_vector(nbofbitsforinteger downto 0 );
              totalexponent2 : in std_logic_vector(nbofbitsforinteger downto 0 );
-             fractionformultiplicationn : out std_logic_vector(nbofbitsformultiplication -1 downto 0 )
+             fractionformultiplicationn : out std_logic_vector(nbofbitsformultiplication -1 downto 0 );
+             operation : in std_logic_vector( 2 downto 0 );
+             SquaredRoot : out std_logic_vector( 49 downto 0 );
+             CLK : in std_logic;
+             reset : in std_logic;
+             flagforinverse : out std_logic
          
 		);
 		end PLU;
-architecture PLUarchi of PLU is
-begin
-
-process(cases,fraction1resizedshifted,fraction2resizedshifted) 
-variable fraction1addedto1: std_logic_vector(nbofbits-1 downto 0);
-variable fraction2addedto1: std_logic_vector(nbofbits-1 downto 0);
-variable nbofbitfraction1 : integer;
-variable nbofbitfraction2 : integer;
-variable howmuch: integer := 0 ;
-variable fractionformultiplication : std_logic_vector(nbofbitsformultiplication-1 downto 0 ); --Note here that multiplication might overflow so need enough bits to represent the multiplication of fraction.
-variable nbofbitfractionaftermultiplication : integer;
-variable fraction1formultiplication : std_logic_vector(nbofbitsformultiplication-1 downto 0 );
-variable fraction2formultiplication : std_logic_vector(nbofbitsformultiplication -1 downto 0 );
-variable quotient : integer; 
-variable remainder : std_logic_vector( nbofbits-1 downto 0 );
-variable remainderdivided : std_logic_vector(nbofbits-1 downto 0 );
-variable totalexponentt : integer;
-variable quotientaddedtoremainder: std_logic_vector(nbofbits -1 downto 0 ); 
-begin
-nbofbitfraction1 := to_integer(unsigned(nbofbitfractionn1));
-nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2));
-
-flag1forexponent <= '0';
-flag2forexponent <='0';
- if (to_integer(signed(totalexponent1))>=to_integer(signed(totalexponent2))) or (cases = "0100") or (cases="1000")  then
-	case(cases) is --Make sure that A is always > B, that way we can reduce the statements and take the sign of A
-	
-	when ( "0000" ) => --  A+B or -A - B                                                                               
-   PLU_Result <= std_logic_vector(unsigned(fraction1resizedshifted)+unsigned(fraction2resizedshifted)) ;
-  
-  
-    when ("0001") => --Subtract A-B knowing that totalexponent(A) > totalexponent(B)
-    if( to_integer(unsigned(fraction1resizedshifted))  >= to_integer(unsigned(fraction2resizedshifted)) )then -- FA > FB so subtract normally
-	   PLU_Result <= std_logic_vector(unsigned(fraction1resizedshifted)-unsigned(fraction2resizedshifted)) ;
-	else  -- This means FB > FA but TEA > TEB
-	    -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-	--I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-               fraction1addedto1 := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction1));
- 
-        fraction1addedto1 := std_logic_vector(unsigned(fraction1addedto1)-unsigned(fraction2resizedshifted)) ; --Now do the subtraction
-      -- Now I need to extract the + 1 from above.
-               for i in  0 to nbofbits loop
-                   if to_integer(unsigned(fraction1addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction1)) then
-                   
-                   fraction1addedto1 := std_logic_vector(shift_left(unsigned(fraction1addedto1),1));
-                   howmuch :=howmuch + 1;
-                   end if;
-                   end loop;
-
-            --   fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1)); -- The reason i shift right is because it overshoots when it is shifting in the for loop
-               PLU_Result <= std_logic_vector( unsigned(fraction1addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction1));
-               --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
-               flag1forexponent <= '1'; --flsg to decrement later on in postprocessing
-               howmuchtoshiftsubtract <= std_logic_vector(to_unsigned(howmuch,nbofbits));
-	    
-	  end if;
-	  
-	  
-	 when ( "0011") => -- B- A remember here total exponent A is > total exponent B, so do A - B and take the inverse by flagging for the posit processing unit 
- if( to_integer(unsigned(fraction2resizedshifted))  >= to_integer(unsigned(fraction1resizedshifted)) )then 
-           PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
-        else 
-            -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-        --I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-                   fraction1addedto1 := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction1));
-
-                    howmuch := 0 ;
-            fraction1addedto1 := std_logic_vector(unsigned(fraction1addedto1)-unsigned(fraction2resizedshifted)) ; --Now do the subtraction
-          
-                   for i in  0 to nbofbits loop
-                       if to_integer(unsigned(fraction1addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction1)) then
-                       
-                       fraction1addedto1 := std_logic_vector(shift_left(unsigned(fraction1addedto1),1));
-                       howmuch :=howmuch + 1;
-                       end if;
-                       end loop;
-                 --   howmuchtosubtract <= std_logic_vector(to_unsigned(howmuch-1,nbofbits));
-                 --  fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1));
-                   PLU_Result <= std_logic_vector( unsigned(fraction1addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction1));
-                   --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
-                   flag1forexponent <= '1'; --flsg to decrement later on in postprocessing
-                   howmuchtoshiftsubtract <= std_logic_vector(to_unsigned(howmuch,nbofbits));
-                   Flag1ForSubtraction <= '1'; -- remember i am doing B- A and not A-B, so need to take inverse of this result obtained
-             
-	end if;
-	
-	
-	
-	
-	when  ("0100")=>
-	   fraction1formultiplication := std_logic_vector(resize(unsigned(fraction1resizedshifted),nbofbitsformultiplication));
 		
- fraction2formultiplication := std_logic_vector(resize(unsigned(fraction2resizedshifted),nbofbitsformultiplication));
-              
-	fractionformultiplication := std_logic_vector(unsigned(fraction1resizedshifted) * unsigned(fraction2resizedshifted));
-    fractionformultiplicationn <= fractionformultiplication ;
-	   
-	  when ("1000") => 
+		
+architecture PLUarchi of PLU is
 
-        fraction1addedto1 := fraction1resizedshifted;
-	   if unsigned(fraction1resizedshifted) >= unsigned(fraction2resizedshifted) then -- so i can move on 
-	        quotient := to_integer(unsigned(fraction1resizedshifted)/unsigned(fraction2resizedshifted));
-             remainder := std_logic_vector(unsigned(fraction1resizedshifted) mod unsigned( fraction2resizedshifted)); 
-        else  -- i will need to shift fractoin1addedto1 until its bigger than fraction2
+
+signal squaredroot1 : std_logic_vector( 14 downto 0 ) := "000000000000000";
+signal squaredroot2 : std_logic_vector( 14 downto 0 ) := "000000000000000";
+signal squaredroot3 : std_logic_vector( 14 downto 0 ) := "000000000000000";
+signal squaredroot4 : std_logic_vector( 14 downto 0 ) := "000000000000000";
+signal root_out : std_logic_vector ( 49 downto  0 ) :="00000000000000000000000000000000000000000000000000";
+signal data_enable1 : std_logic := '1';
+signal data_enable2 : std_logic := '0' ;
+signal data_enable3 : std_logic:= '0' ;
+signal data_enable4 : std_logic:= '0' ;
+signal quotient_out : std_logic_vector(nbofbits -1 downto 0 ):= "0000000000000000";
+signal remainder_out : std_logic_vector(nbofbits -1 downto 0 ):= "0000000000000000";
+signal howmuch_out : std_logic_vector(nbofbitsforinteger downto 0 ):= "00000000000000000";
+
+signal howmuch_out_Multiplication : std_logic_vector( nbofbitsforinteger -1 downto 0 );
+signal howmuch_out_Division : std_logic_vector( nbofbitsforinteger -1 downto 0 );
+signal howmuch_out_Addition : std_logic_vector( nbofbitsforinteger -1 downto 0 );
+signal howmuch_out_Subtraction1 : std_logic_vector( nbofbitsforinteger -1 downto 0 );
+signal howmuch_out_Subtraction2 : std_logic_vector( nbofbitsforinteger -1 downto 0 );
+
+
+signal PLU_Result_Divsion : std_logic_vector(nbofbits-1 downto 0 );
+signal PLU_Result_Addition : std_logic_vector(nbofbits-1 downto 0 );
+signal PLU_Result_Subtraction1 : std_logic_vector(nbofbits-1 downto 0 );
+signal PLU_Result_Subtraction2 : std_logic_vector(nbofbits-1 downto 0 );
+
+signal flagforinverse_subtraction1 : std_logic;
+signal flagforinverse_subtraction2 : std_logic;
+
+signal number_std :std_logic_vector( 99 downto 0 );
+begin
+
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+                    process(CLK) -- this process is for square root, 1st cycle
+                    
+                    
+                    variable number : unsigned (99 downto 0 ):="0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" ; 
+                    variable root : unsigned ( 49 downto 0 ) := "00000000000000000000000000000000000000000000000000";
+                    
+                    begin
+                    
+                            if rising_edge(CLK) then
+                     
+                       
+                            
+                                   
+                                 if cases = "1111"  then --  this is square root
+                              
+                                               root := to_unsigned(0,50);  -- temp variable to hold our our signal
+                                               
+                                               number := resize(shift_right(shift_left(resize("10",100),to_integer(unsigned(totalexponent1))-1) *unsigned(fraction1resizedshifted),to_integer(unsigned(nbofbitfractionn1))),100) ; -- this is the number converted to an integer, which is  why i need a  100bits, it could need more than a 100 bits depending on my USEED.
+                                               
+                                                -- number is 2^ total exponent x (1+ fraction) , (1+fraction) is fraction1resizedshifted over 2^nbofbits, so the end result is shifted to the right by 2^nbofbitsfraction1, 
+                                                
+                                               for i in 49 downto 35  loop 
+                                               
+                                               root(i) := '1';
+                                               
+                                               if root*root >= number then
+                                               root(i) := '0';
+                                               
+                                               end if;
+                    
+                                               end loop;
+                                               squaredroot1 <= std_logic_vector(root(49 downto 35));         
+                                                number_std <= std_logic_vector(number); 
+                                   end if;
+                    
+                            end if;
+                          
+                      end process;
+                      
+                      
+                      
+                     process(CLK) -- this process is for square root, 2nd cycle
+                      
+                      
+                    variable number : unsigned (99 downto 0 ):="0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" ; 
+                     variable root : unsigned ( 49 downto 0 ) := "00000000000000000000000000000000000000000000000000";
+                    
+                      
+                      begin
+                      
+                              if rising_edge(CLK) then
+                       
+                         
+                              
+                                     
+                                   if cases = "1111"  then --  this is square root
+                                
+                                                 root := to_unsigned(0,50);  -- temp variable to hold our our signal
+                                                 root ( 49 downto 35) := unsigned(squaredroot1);
+                                                 
+                                                 number := resize(shift_right(shift_left(resize("10",100),to_integer(unsigned(totalexponent1))-1) *unsigned(fraction1resizedshifted),to_integer(unsigned(nbofbitfractionn1))),100) ; -- this is the number converted to an integer, which is  why i need a  100bits, it could need more than a 100 bits depending on my USEED.
+                                                 
+                                                  -- number is 2^ total exponent x (1+ fraction) , (1+fraction) is fraction1resizedshifted over 2^nbofbits, so the end result is shifted to the right by 2^nbofbitsfraction1, 
+                                                  
+                                                 for i in 34 downto 20  loop 
+                                                 
+                                                 root(i) := '1';
+                                                 
+                                                 if root*root >= number then
+                                                 root(i) := '0';
+                                                 
+                                                 end if;
+                      
+                                                 end loop;
+                                                  squaredroot2 <= std_logic_vector(root(34 downto 20));
+                                                
+                                     end if;
+                              end if;
+                        end process;                             
+                      process(CLK) -- this process is for square root, 3rd cycle
+                        
+                      variable number : unsigned (99 downto 0 ):="0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" ; 
+                      variable root : unsigned ( 49 downto 0 ) := "00000000000000000000000000000000000000000000000000";
+                    
+                        begin
+                        
+                                if rising_edge(CLK) then
+                         
+                           
+                                
+                                       
+                                     if cases = "1111"  then --  this is square root
+                                  
+                                                  root := to_unsigned(0,50);
+                                                   root ( 49 downto 35 ) := unsigned(squaredroot1) ;
+                                                   root(34 downto 20 ) := unsigned(squaredroot2);
+                                                   
+                                                   number := resize(shift_right(shift_left(resize("10",100),to_integer(unsigned(totalexponent1))-1) *unsigned(fraction1resizedshifted),to_integer(unsigned(nbofbitfractionn1))),100) ; -- this is the number converted to an integer, which is  why i need a  100bits, it could need more than a 100 bits depending on my USEED.
+                                                   
+                                                    -- number is 2^ total exponent x (1+ fraction) , (1+fraction) is fraction1resizedshifted over 2^nbofbits, so the end result is shifted to the right by 2^nbofbitsfraction1, 
+                                                    
+                                                   for i in 19 downto 5  loop 
+                                                   
+                                                   root(i) := '1';
+                                                   
+                                                   if root*root >= number then
+                                                   root(i) := '0';
+                                                   
+                                                   end if;
+                        
+                                                   end loop;
+                                                   squaredroot3 <= std_logic_vector(root(19 downto 5));
+                                                 
+                                                    
+                                       end if;
+                                end if;
+                          end process;                             
+                                            
+                    process(CLK) -- this process is for square root, 4th cycle
+                          
+                          variable number : unsigned (99 downto 0 ):="0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" ; 
+                    variable root : unsigned ( 49 downto 0 ) := "00000000000000000000000000000000000000000000000000";
+                    
+                          begin
+                          
+                                  if rising_edge(CLK) then
+                           
+                             
+                                  
+                                         
+                                       if cases = "1111" then --  this is square root
+                                                  root := to_unsigned(0,50);
+                                                                     root ( 49 downto 35 ) := unsigned(squaredroot1) ;
+                                                                      root ( 34 downto 20 ) := unsigned(squaredroot2) ;
+                                                                      root ( 19 downto 5 ) :=  unsigned( squaredroot3);
+                                                     
+                                                     number := resize(shift_right(shift_left(resize("10",100),to_integer(unsigned(totalexponent1))-1) *unsigned(fraction1resizedshifted),to_integer(unsigned(nbofbitfractionn1))),100) ; -- this is the number converted to an integer, which is  why i need a  100bits, it could need more than a 100 bits depending on my USEED.
+                                                     
+                                                      -- number is 2^ total exponent x (1+ fraction) , (1+fraction) is fraction1resizedshifted over 2^nbofbits, so the end result is shifted to the right by 2^nbofbitsfraction1, 
+                                                      
+                                                     for i in 4 downto 0  loop 
+                                                     
+                                                     root(i) := '1';
+                                                     
+                                                     if root*root >= number then
+                                                     root(i) := '0';
+                                                     
+                                                     end if;
+                          
+                                                     end loop;
+                                                     root_out <= std_logic_vector(root);
+                                                     
+                                                     SquaredRoot <=std_logic_vector(shift_left(root,1));
+                                                    
+                                         end if;
+                                  end if;
+                        end process;
+
+
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to division-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+        process(CLK) -- this process is for division
+        
+        
+        variable fraction1addedto1: std_logic_vector(nbofbits-1 downto 0):= "0000000000000000";
+        variable remainderdivided : std_logic_vector(nbofbits-1 downto 0 ):= "0000000000000000";
+        variable remainder : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+        variable nbofbitfraction1 : natural;
+        variable howmuch: integer := 0 ;
+        variable quotient : integer := 0; 
+        
+        
+        begin
+        
+        
+        if rising_edge(CLK) then
+        
+        
+        howmuch:=0;
+        
+        if cases = "1000" THEN
+        
+                fraction1addedto1 := fraction1resizedshifted;
+                nbofbitfraction1 := to_integer(unsigned(nbofbitfractionn1));
+                
+               if unsigned(fraction1resizedshifted) >= unsigned(fraction2resizedshifted) then -- so i can move on 
+                    quotient := to_integer(unsigned(fraction1resizedshifted)/unsigned(fraction2resizedshifted));
+                     remainder := std_logic_vector(unsigned(fraction1resizedshifted) mod unsigned( fraction2resizedshifted)); 
+                     
+                else  -- i will need to shift fractoin1addedto1 until its bigger than fraction2
+               
+               
+                        for i in nbofbits-4 downto 0 loop   -- shifting fraction1 until it is bigger than fraction 2
+                          if i <= nbofbitfraction1 -1 then
+                        if unsigned(fraction1addedto1) < unsigned(fraction2resizedshifted) then
+                            fraction1addedto1 := std_logic_vector(shift_left(unsigned(fraction1addedto1),1));
+                             howmuch := howmuch +1 ; -- this is used to determine later on how much i need to subtract from my total exponent
+                         end if ;
+                         end if;
+                         end loop; 
+                         quotient := to_integer(unsigned(fraction1addedto1)/unsigned(fraction2resizedshifted));
+                                remainder := std_logic_vector(unsigned(fraction1addedto1) mod unsigned( fraction2resizedshifted)); 
+                 end if;
+                 
+                 quotient_out <= std_logic_vector(to_unsigned(quotient,nbofbits));
+                 remainder_out <= remainder;
+                 howmuch_out <= std_logic_vector(to_unsigned(howmuch,nbofbitsforinteger+1));
+                 
+        end if;
+        end if;
+        end process;
+    
+                 
+                 
+
        
-       
-                for i in (nbofbitfraction1 -1 ) downto 0 loop   -- shifting fraction1 until it is bigger than fraction 2
-                if unsigned(fraction1addedto1) < unsigned(fraction2resizedshifted) then
-                    fraction1addedto1 := std_logic_vector(shift_left(unsigned(fraction1addedto1),1));
-                     howmuch := howmuch +1 ;
-                 end if ;
-                 end loop; 
-         quotient := to_integer(unsigned(fraction1addedto1)/unsigned(fraction2resizedshifted));
-       remainder := std_logic_vector(unsigned(fraction1addedto1) mod unsigned( fraction2resizedshifted)); 
-          end if ;
+        process(CLK) -- this process is for division
+        
+        
+        variable fraction1addedto1: std_logic_vector(nbofbits-1 downto 0):= "0000000000000000";
+        variable remainderdivided : std_logic_vector(nbofbits-1 downto 0 ):= "0000000000000000";
+        variable remainder : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+   
+        variable howmuch: integer := 0 ;
+        variable quotient : integer :=0; 
+        
+        
+        begin
+           if cases = "1000" THEN
+        
+        if rising_edge(CLK) then
+        remainder := remainder_out;
+        quotient := to_integer(unsigned(quotient_out));
+        howmuch := to_integer(unsigned(howmuch_out));
+   
          
 
 	   
@@ -157,93 +349,302 @@ flag2forexponent <='0';
                   howmuch := howmuch - (quotient - 1 ) ; 
                   end if ; 
 
-	   PLU_Result <= remainderdivided;
-	   howmuchtoshiftsubtract <= std_logic_vector( to_signed( howmuch,nbofbits)) ;
+	   PLU_Result_Divsion <= remainderdivided; -- thhis is thhe answer of my division which will be used to form my answers later on
+	   howmuch_out_division <= std_logic_vector( to_signed( howmuch,nbofbits)) ; -- letting my postprocssing know how much i need to subtract
 	   
-	   when others => PLU_Result <= "1111111111111111";
-              
-	 end case;
-	 
-	 
-	 
-else 
+        
+        end if;
+        end if;
+end process;
 
 
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to MULTIPLICATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-	case(cases) is -- Here we have totalexponent (B) >totalexponent(A))
-	when ( "0000" ) => --  A+B or -A - B                                                                               
-   PLU_Result <= std_logic_vector(unsigned(fraction1resizedshifted)+unsigned(fraction2resizedshifted)) ;
-  
-  
-    when ("0011") => --Subtract B-A knowing that totalexponent(B) > totalexponent(A)
-    if( to_integer(unsigned(fraction2resizedshifted))  >= to_integer(unsigned(fraction1resizedshifted)) )then -- FA > FB so subtract normally
-	   PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
-	else  -- This means FB > FA but TEA > TEB
-	    -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-	--I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-               fraction2addedto1 := std_logic_vector(unsigned(fraction2resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction2));
+process(CLK)
 
-                howmuch := 0 ;
-  
-        fraction2addedto1 := std_logic_vector(unsigned(fraction2addedto1)-unsigned(fraction1resizedshifted)) ; --Now do the subtraction
-      -- Now I need to extract the + 1 from above.
-               for i in  0 to nbofbits loop
-                   if to_integer(unsigned(fraction2addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction2)) then
-                   
-                   fraction2addedto1 := std_logic_vector(shift_left(unsigned(fraction2addedto1),1));
-                   howmuch :=howmuch + 1;
-                   end if;
-                   end loop;
+variable fraction1formultiplication : std_logic_vector(nbofbitsformultiplication-1 downto 0 );
+variable fraction2formultiplication : std_logic_vector(nbofbitsformultiplication -1 downto 0 );
+variable fractionformultiplication : std_logic_vector(nbofbitsformultiplication-1 downto 0 );
+begin
 
-            --   fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1)); -- The reason i shift right is because it overshoots when it is shifting in the for loop
-               PLU_Result <= std_logic_vector( unsigned(fraction2addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction2));
-               --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
-               flag2forexponent <= '1'; --flsg to decrement later on in postprocessing
-               howmuchtoshiftsubtract <= std_logic_vector(to_unsigned(howmuch,nbofbits));
-	    
-	  end if;
-	  
-	  
-	 when ( "0001") => -- A - B knowing totalexponent(B)>totalexponent(A) , so do B - A and take inverse later on
-  if( to_integer(unsigned(fraction2resizedshifted))  >= to_integer(unsigned(fraction1resizedshifted)) )then -- FA > FB so subtract normally
-           PLU_Result <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
-       
-       
-        else  -- This means FB > FA but TEA > TEB
-            -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-        --I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
-                   fraction2addedto1 := std_logic_vector(unsigned(fraction2resizedshifted) + shift_left(to_unsigned(1, nbofbits),nbofbitfraction2));
-    
-                    howmuch := 0 ;
-      
-            fraction2addedto1 := std_logic_vector(unsigned(fraction2addedto1)-unsigned(fraction1resizedshifted)) ; --Now do the subtraction
-          -- Now I need to extract the + 1 from above.
-                   for i in  0 to nbofbits loop
-                       if to_integer(unsigned(fraction2addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction2)) then
-                       
-                       fraction2addedto1 := std_logic_vector(shift_left(unsigned(fraction2addedto1),1));
-                       howmuch :=howmuch + 1;
-                       end if;
-                       end loop;
-    
-                --   fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1)); -- The reason i shift right is because it overshoots when it is shifting in the for loop
-                   PLU_Result <= std_logic_vector( unsigned(fraction2addedto1) - shift_left(to_unsigned(1,nbofbits),nbofbitfraction2));
-                   --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
-                   flag2forexponent <= '1'; --flsg to decrement later on in postprocessing
-                   howmuchtoshiftsubtract <= std_logic_vector(to_unsigned(howmuch,nbofbits));
-             Flag1ForSubtraction <= '1'; -- I am doing A- B not B- A so i need to flag so that i can take care of this later on
-          end if;
-          
-          
+if rising_edge(CLK) then
+
+ if cases = "0100" then
  
-          
-          
-          
-	  when others => PLU_Result <= "1111111111111111";
-	   
-	  
-	 end case;
-	 end if;
+ 
+   fraction1formultiplication := std_logic_vector(resize(unsigned(fraction1resizedshifted),nbofbitsformultiplication));
+       
+fraction2formultiplication := std_logic_vector(resize(unsigned(fraction2resizedshifted),nbofbitsformultiplication));
+             
+   fractionformultiplication := std_logic_vector(unsigned(fraction1resizedshifted) * unsigned(fraction2resizedshifted));
+   fractionformultiplicationn <= fractionformultiplication ;
+
+   
+   
+ end if;
+
+
+
+
+
+
+
+end if;
+
+
 
 end process;
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------Moving on to ADD/SUBTRACT-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to ADD/SUBTRACT-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to ADD/SUBTRACT-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to ADD/SUBTRACT-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to ADD/SUBTRACT-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to ADD/SUBTRACT-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving on to ADD/SUBTRACT-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+process (CLK) -- Thhis process is for addition whhich is very simple.
+
+begin
+
+if rising_edge(CLK) then
+        
+    if cases ="0000" then
+     PLU_Result_Addition <= std_logic_vector(unsigned(fraction1resizedshifted)+unsigned(fraction2resizedshifted)) ;
+     
+    end if;
+
+
+
+
+end if;
+
+end process;
+
+
+
+
+
+process(CLK) --- this process is for A - B and TEA > TEB, so i will ned to check which number is bigger and subtract the smaller number  from it, then at the end i can simply reverse this numbe rin mpost processing since -x is complement of x.
+
+variable fraction1addedto1: std_logic_vector(nbofbits-1 downto 0) := "0000000000000000";
+variable fraction2addedto1: std_logic_vector(nbofbits-1 downto 0) := "0000000000000000";
+variable nbofbitfraction1 : natural :=0;
+variable nbofbitfraction2 : natural :=0;
+variable howmuch: integer := 0 ;
+begin
+    if rising_edge(CLK) then
+            
+            if cases = "0001" or cases= "0011" then
+            howmuch := 0;
+             if to_integer(unsigned(totalexponent1)) > to_integer( unsigned(totalexponent2) )then
+             
+             
+                   if to_integer(unsigned(fraction1resizedshifted))  >= to_integer(unsigned(fraction2resizedshifted)) then -- FA > FB so subtract normally
+                   
+                    PLU_Result_Subtraction1 <= std_logic_vector(unsigned(fraction1resizedshifted)-unsigned(fraction2resizedshifted)) ;
+                    
+                    
+                 else  -- This means FB > FA but TEA > TEB
+                     -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+                 --I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+                            fraction1addedto1 := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1, nbofbits),to_integer(unsigned(nbofbitfractionn1))));
+               
+                     fraction1addedto1 := std_logic_vector(unsigned(fraction1addedto1)-unsigned(fraction2resizedshifted)) ; --Now do the subtraction
+                    
+                   
+                   -- Now I need to extract the + 1 from above.
+                            for i in  0 to nbofbits loop
+                                if to_integer(unsigned(fraction1addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn1)))) then
+                                
+                                fraction1addedto1 := std_logic_vector(shift_left(unsigned(fraction1addedto1),1));
+                                howmuch :=howmuch + 1;
+                                end if;
+                                end loop;
+             
+                         --   fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1)); -- The reason i shift right is because it overshoots when it is shifting in the for loop
+                            PLU_Result_Subtraction1 <= std_logic_vector( unsigned(fraction1addedto1) - shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn1))));
+                            --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
+                            flag1forexponent <= '1'; --flsg to decrement later on in postprocessing
+                            howmuch_out_Subtraction1 <= std_logic_vector(to_unsigned(howmuch,nbofbits));
+                       
+                       
+                       if cases = "0011" then
+                       flagforinverse_Subtraction1 <='1';
+                       else
+                       flagforinverse_Subtraction1 <='0';
+                       end if;
+                     
+                   end if;
+                    
+             end if;
+             
+             end if;
+            
+            
+    
+    
+    
+    
+    end if;
+
+end process;
+
+
+
+
+process(CLK) --- this process is for A - B and TEB > TEA, so i will do B - A . 
+
+variable fraction1addedto1: std_logic_vector(nbofbits-1 downto 0) := "0000000000000000";
+variable fraction2addedto1: std_logic_vector(nbofbits-1 downto 0) := "0000000000000000";
+variable nbofbitfraction1 : natural :=0;
+variable nbofbitfraction2 : natural :=0;
+variable howmuch: integer := 0 ;
+begin
+
+
+    if rising_edge(CLK) then
+            
+            if cases = "0001" or cases= "0011"  then
+            
+             if to_integer(unsigned(totalexponent2)) >= to_integer( unsigned(totalexponent1) )then
+             
+             
+                   if to_integer(unsigned(fraction2resizedshifted))  >= to_integer(unsigned(fraction1resizedshifted)) then -- FA > FB so subtract normally
+                   
+                    PLU_Result_Subtraction2 <= std_logic_vector(unsigned(fraction2resizedshifted)-unsigned(fraction1resizedshifted)) ;
+                    
+                    
+                 else  -- This means FB > FA but TEA > TEB
+                     -- I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+                 --I need to shift FA by one, decrement the total exponent in A and shift FB to the left by one also since total exponent changed. I willdo the total exponent change in post processing by using the flag
+                            fraction2addedto1 := std_logic_vector(unsigned(fraction2resizedshifted) + shift_left(to_unsigned(1, nbofbits),to_integer(unsigned(nbofbitfractionn2))));
+              
+                     fraction2addedto1 := std_logic_vector(unsigned(fraction2addedto1)-unsigned(fraction1resizedshifted)) ; --Now do the subtraction
+                   -- Now I need to extract the + 1 from above.
+                            for i in  0 to nbofbits loop
+                                if to_integer(unsigned(fraction2addedto1)) <= to_integer(shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn2)))) then
+                                
+                                fraction2addedto1 := std_logic_vector(shift_left(unsigned(fraction2addedto1),1));
+                                howmuch :=howmuch + 1;
+                                end if;
+                                end loop;
+             
+                         --   fraction1addedto1 :=std_logic_vector(shift_right(unsigned(fraction1addedto1),1)); -- The reason i shift right is because it overshoots when it is shifting in the for loop
+                            PLU_Result_Subtraction2 <= std_logic_vector( unsigned(fraction2addedto1) - shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn2))));
+                            --howmuchtosubtractshift <= std_logic_vector(to_unsigned(howmuch-1,nbofbitsforinteger+1));
+                            flag2forexponent <= '1'; --flsg to decrement later on in postprocessing
+                            howmuch_out_Subtraction2 <= std_logic_vector(to_unsigned(howmuch,nbofbits));
+                            
+                     if cases= "0001" then
+                     flagforinverse_Subtraction2 <='1';
+                     else
+                     flagforinverse_Subtraction2 <='0';
+                     end if;
+                   end if;
+                    
+             end if;
+             
+             end if;
+            
+            
+    
+    
+    
+    
+    end if;
+
+end process;
+
+
+
+
+
+        
+        process(CLK)
+        
+        begin
+        
+        
+        
+        if rising_edge(CLK) then
+
+   
+                        if cases="1000" then
+                        
+                        
+                        PLU_Result <=  PLU_Result_Divsion;
+                        howmuchtoshiftsubtract <= howmuch_out_division;
+                        
+                        elsif cases ="0000" then
+                        PLU_Result <= PLU_Result_Addition;
+                        howmuchtoshiftsubtract  <= std_logic_vector( to_unsigned ( 0, nbofbits));
+                        
+                        elsif cases ="1100" or  cases= "0001" then
+                        
+                        if to_integer(signed(totalexponent1)) >= to_integer(signed(totalexponent2)) then
+                        PLU_result <= PLU_Result_Subtraction1;
+                        howmuchtoshiftsubtract <= howmuch_out_Subtraction1;
+                        flagforinverse <= flagforinverse_Subtraction1 ;
+                        else
+                        PLU_result <= PLU_Result_Subtraction1;
+                        howmuchtoshiftsubtract <= howmuch_out_Subtraction1;
+                        flagforinverse <= flagforinverse_Subtraction1 ;
+                        
+                        end if;
+                        
+                        
+                        end if ;
+        
+        
+        end if;
+        
+        end process;
+
+
+
+
 end PLUarchi;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
