@@ -6,6 +6,14 @@ library work;
 use work.PLU_package.all;
 
 
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
 
 entity FullPLU_TB is
 --  Port ( );
@@ -19,9 +27,11 @@ port (              Posit1 : in std_logic_vector(nbofbits-1 downto 0 ); -- first
                    nbofbitfractionn2: in std_logic_vector(nbofbitsforinteger downto 0);
                    nbofbitexponentt1: in std_logic_vector(nbofbitsforinteger downto 0);
                    nbofbitexponentt2: in std_logic_vector(nbofbitsforinteger downto 0);
-                   add: in std_logic;
+                   operation : in std_logic_vector( 2 downto 0 );
                    Posit4 : out std_logic_vector(nbofbits-1 downto 0 );
-                    es : in std_logic_vector(nbofbitsforinteger downto 0)
+                    es : in std_logic_vector(nbofbitsforinteger downto 0);
+                    CLK : in std_logic;
+                    reset : in std_logic
                     );
 end component;
 
@@ -31,9 +41,11 @@ signal                   nbofbitfractionn1:  std_logic_vector(nbofbitsforinteger
 signal                   nbofbitfractionn2:  std_logic_vector(nbofbitsforinteger downto 0);
 signal                   nbofbitexponentt1:  std_logic_vector(nbofbitsforinteger downto 0);
 signal                   nbofbitexponentt2:  std_logic_vector(nbofbitsforinteger downto 0);
-signal                   add:  std_logic;
+signal                   operation:  std_logic_vector(2 downto 0 );
 signal                   Posit4 :  std_logic_vector(nbofbits-1 downto 0 );
 signal                   es : std_logic_vector(nbofbitsforinteger downto 0 );
+signal CLK : std_logic := '0';
+signal reset : std_Logic :='0';
 begin
 U1 : FullPLU port map ( 
                 Posit1,
@@ -42,48 +54,80 @@ U1 : FullPLU port map (
                  nbofbitfractionn2,
                  nbofbitexponentt1,
                  nbofbitexponentt2,
-                 add,
+                 operation,
                  Posit4 ,
-                 es);
+                 es,
+                 CLK
+                ,reset);
+                 
 process
  begin
-        wait for 100ns;
-       --Posit1 <=  "0111011001110110";
-       --Posit2 <=   "0111100101001011"; 
        
+       --  Posit1 <=  "0111010100101011";
+       --  Posit2 <=   "0110010100010100"; 
+         --nbofbitfractionn1 <= "00000000000001000";
+        -- nbofbitfractionn2 <= "00000000000001001";
+        -- nbofbitexponentt2 <= "00000000000000011";
+        -- nbofbitexponentt1 <= "00000000000000011"; 
+        -- operation <= "010";     
+       --  es <="00000000000000011";
+        
+        
+        wait for 100ns;
+      --    Posit1 <=  "0111010100101011";
+       --  Posit2 <=   "0110010100010100"; 
+              --  nbofbitfractionn1 <= "00000000000001000";
+              --  nbofbitfractionn2 <= "00000000000001001";
+            --  nbofbitexponentt2 <= "00000000000000011";
+            --   nbofbitexponentt1 <= "00000000000000011"; 
+             --   operation <= "100";     
+            --   es <="00000000000000011";
+            --  wait for 10ns;
+         
+           Posit1 <=  "0111010100101011";
+              Posit2 <=   "0111001010001010"; 
+                      nbofbitfractionn1 <= "00000000000001000";
+                      nbofbitfractionn2 <= "00000000000001000";
+                    nbofbitexponentt1 <= "00000000000000011";
+                     nbofbitexponentt2 <= "00000000000000011"; 
+                      operation <= "010";     
+                     es <="00000000000000011";
+          
+               CLK <= not CLK after 5000ns;
        --nbofbitfractionn2 <= "00000000000000111";
        --nbofbitfractionn1 <= "00000000000001000";
        --nbofbitexponentt2 <= "00000000000000011";
        --nbofbitexponentt1 <= "00000000000000011"; 
        --add<='1';
        
-       --  Posit1 <=  "1000111001110110";
+        -- Posit1 <=  "1000111001110110";
          --  Posit2 <=   "0111100101001011"; 
              
-           --nbofbitfractionn2 <= "00000000000000111";
-             --nbofbitfractionn1 <= "00000000000001000";
+         --  nbofbitfractionn2 <= "00000000000000111";
+            -- nbofbitfractionn1 <= "00000000000001000";
             -- nbofbitexponentt2 <= "00000000000000011";
-             --nbofbitexponentt1 <= "00000000000000011"; 
-             --add<='1';
+            -- nbofbitexponentt1 <= "00000000000000011"; 
+            -- add<='1';
              
-                       Posit1 <=  "1000000000000100";
-                       Posit2 <=   "0111100101001011"; 
+                    --   Posit1 <=  "1000000000001000";
+                      -- Posit2 <=   "0111100101001011"; 
                          
-                         nbofbitfractionn1 <= "00000000000000000";
-                         nbofbitfractionn2 <= "00000000000001000";
-                         nbofbitexponentt1 <= "00000000000000011";
-                         nbofbitexponentt2 <= "00000000000000011"; 
-                                          es <="00000000000000100";
-                         add<='1';
-                                     
-       wait for 100ns;
-     --  Posit1 <=          "0111101110000010";
-           --   Posit2 <=   "0111101011000111";   
-           --   nbofbitfractionn2 <= "00000000000000111";
-           --   nbofbitfractionn1 <= "00000000000000111";
-           --   nbofbitexponentt2 <= "00000000000000011";
-          --    nbofbitexponentt1 <= "00000000000000011"; 
-        --      add<='0';
-              wait;
+                        -- nbofbitfractionn1 <= "00000000000000000";
+                        -- nbofbitfractionn2 <= "00000000000000111";
+                        -- nbofbitexponentt1 <= "00000000000000011";
+                        -- nbofbitexponentt2 <= "00000000000000011"; 
+                          --               es <="00000000000000011";
+                        -- add<='1';
+                    --Expected result is the same as Posit1.
+  
+      -- Posit1 <=          "0111101010001001";
+             -- Posit2 <=   "0111101010000101";   
+            --  nbofbitfractionn2 <= "00000000000000111";
+            --  nbofbitfractionn1 <= "00000000000000111";
+             -- nbofbitexponentt2 <= "00000000000000011";
+             -- nbofbitexponentt1 <= "00000000000000011"; 
+              --add<='0';
+             -- es <="00000000000000011";
+        
        end process;
 end Behavioral;
