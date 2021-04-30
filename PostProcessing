@@ -27,14 +27,824 @@ port (
 		howmuchtoshiftsubtract : in std_logic_vector(nbofbits-1 downto 0 );
 		Flag1ForSubtraction : in std_logic ;
 		es : in std_logic_vector ( nbofbitsforinteger downto 0 );
-		 fractionformultiplicationn : in std_logic_vector(nbofbitsformultiplication -1 downto 0 )
+		 fractionformultiplicationn : in std_logic_vector(nbofbitsformultiplication -1 downto 0 );
+		 SquaredRoot : in std_logic_vector( 49 downto 0 );
+		 CLK : in std_logic;
+		 reset : in std_logic;
+		 flagforinverse : in std_logic
 		);
 		end Postprocessing;
 		
 architecture Postprocessingarchi of Postprocessing is
 
+
+
+signal fraction_vector_out1 : std_logic_vector(nbofbits-1 downto 0 ) := "0000000000000000";
+signal exponent_vector_out1 : std_logic_vector(nbofbits-1 downto 0 ):= "0000000000000000";
+signal Sign_out1 : std_logic := '0';
+signal nbofregimebits_out1 : std_logic_vector( nbofbitsforinteger-1 downto 0):= "0000000000000000";
+signal total_exponent_out1 : std_logic_vector(nbofbitsforinteger-1 downto 0 ):= "0000000000000000";
+signal  nboffractionbits_out1 : std_logic_vector(nbofbitsforinteger-1 downto 0 ):= "0000000000000000";
+
+signal fraction_vector_out2 : std_logic_vector(nbofbits-1 downto 0 ) := "0000000000000000";
+signal exponent_vector_out2 : std_logic_vector(nbofbits-1 downto 0 ):= "0000000000000000";
+signal Sign_out2 : std_logic := '0';
+signal nbofregimebits_out2 : std_logic_vector( nbofbitsforinteger-1 downto 0):= "0000000000000000";
+signal total_exponent_out2 : std_logic_vector(nbofbitsforinteger-1 downto 0 ):= "0000000000000000";
+signal  nboffractionbits_out2 : std_logic_vector(nbofbitsforinteger-1 downto 0 ):= "0000000000000000";
+
+signal fraction_vector_out3 : std_logic_vector(nbofbits-1 downto 0 ) := "0000000000000000";
+signal exponent_vector_out3 : std_logic_vector(nbofbits-1 downto 0 ):= "0000000000000000";
+signal Sign_out3 : std_logic := '0';
+signal nbofregimebits_out3 : std_logic_vector( nbofbitsforinteger-1 downto 0):= "0000000000000000";
+signal total_exponent_out3 : std_logic_vector(nbofbitsforinteger-1 downto 0 ):= "0000000000000000";
+signal  nboffractionbits_out3 : std_logic_vector(nbofbitsforinteger-1 downto 0 ):= "0000000000000000";
+
+signal fraction_vector_out4 : std_logic_vector(nbofbits-1 downto 0 ) := "0000000000000000";
+signal exponent_vector_out4 : std_logic_vector(nbofbits-1 downto 0 ):= "0000000000000000";
+signal Sign_out4 : std_logic := '0';
+signal nbofregimebits_out4 : std_logic_vector( nbofbitsforinteger-1 downto 0):= "0000000000000000";
+signal total_exponent_out4 : std_logic_vector(nbofbitsforinteger-1 downto 0 ):= "0000000000000000";
+signal  nboffractionbits_out4 : std_logic_vector(nbofbitsforinteger-1 downto 0 ):= "0000000000000000";
+
+
+
+
+signal totalexponent_out : std_logic_vector(nbofbits -1 downto 0);
+signal nboffractionbits_out : std_logic_vector(nbofbits -1 downto 0 );
+signal nbofregimebits_out : std_logic_vector(nbofbits -1 downto 0 );
+signal fraction_vector_out : std_logic_vector( nbofbits-1 downto 0 );
+signal exponent_vector_out : std_logic_vector( nbofbits-1 downto 0 );
+signal Sign_out : std_logic;
+
+
+
+signal flag_regime_out1 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_exponent_out1 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_fraction_out1 :std_logic_vector( nbofbits-1 downto 0 );
+signal Posit5_Out1 : std_logic_vector( nbofbits-2 downto 0 ) :="000000000000000";
+signal counter_out1 : std_logic_vector( nbofbits-1 downto 0 );
+
+
+signal flag_regime_out2 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_exponent_out2 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_fraction_out2 : std_logic_vector( nbofbits-1 downto 0 );
+signal Posit5_Out2 : std_logic_vector( nbofbits-2 downto 0 ) :="000000000000000";
+signal counter_out2 : std_logic_vector( nbofbits-1 downto 0 );
+
+
+signal flag_regime_out3 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_exponent_out3 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_fraction_out3 : std_logic_vector( nbofbits-1 downto 0 );
+signal Posit5_Out3 : std_logic_vector( nbofbits-2 downto 0 ) :="000000000000000";
+signal counter_out3 : std_logic_vector( nbofbits-1 downto 0 );
+
+signal flag_regime_out4 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_exponent_out4 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_fraction_out4 : std_logic_vector( nbofbits-1 downto 0 );
+signal Posit5_Out4 : std_logic_vector( nbofbits-2 downto 0 ) :="000000000000000";
+signal counter_out4 : std_logic_vector( nbofbits-1 downto 0 );
+
+
+signal flag_regime_out5 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_exponent_out5 : std_logic_vector( nbofbits-1 downto 0 );
+signal flag_fraction_out5 : std_logic_vector( nbofbits-1 downto 0 );
+signal Posit5_Out5 : std_logic_vector( nbofbits-2 downto 0 ) :="000000000000000";
+signal counter_out5 : std_logic_vector( nbofbits-1 downto 0 );
+
+
+
+
+signal          totalexponentt_out : std_logic_vector(nbofbits-1 downto 0 );
+signal                          totalexponentt1_out  : std_logic_vector(nbofbits-1 downto 0 );
+signal                         modulo_out  : std_logic_vector(nbofbits-1 downto 0 );
+signal                        fractionvalue_out : std_logic_vector(49 downto 0 );
+signal                        remainderdivided_out : std_logic_vector(nbofbits downto 0 );
+
+signal                        fractionvalue_out2:std_logic_vector(49 downto 0 );
+signal                        remainderdivided_out2 : std_logic_vector(nbofbits downto 0 );
+
+signal                        fractionvalue_out3 :std_logic_vector(49 downto 0 );
+signal                        remainderdivided_out3: std_logic_vector(nbofbits downto 0 );
+
+signal                        fractionvalue_out4 :std_logic_vector(49 downto 0 );
+signal                        remainderdivided_out4 : std_logic_vector(nbofbits downto 0 );
+
+
+signal                        fractionvalue_out5 :std_logic_vector(49 downto 0 );
+signal                        remainderdivided_out5 :std_logic_vector(nbofbits downto 0 );
+
+
+signal                        fractionvalue_out6 :std_logic_vector(49 downto 0 );
+signal                        remainderdivided_out6 : std_logic_vector(nbofbits downto 0 );
+
+
+
+
+
 begin
-process(Positt3,fractionformultiplicationn)
+
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Starting with  SquareRoot-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+process(CLK)
+        variable totalexponentt : integer :=0;
+        variable modulo: integer := 0;
+        variable nboffractionbits : integer:=0;
+        variable nbofregimebits : integer:=0;
+        variable decrementexponent : integer:=0;
+        variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 ) := "00000000000000000";
+        
+        variable fractionvalue : std_logic_vector(49 downto 0 ) :=  "00000000000000000000000000000000000000000000000000";
+        variable totalexponenttt1: unsigned(nbofbitsforinteger downto 0 ):=  "00000000000000000";
+        variable remainderdivided : std_logic_vector(nbofbits downto 0 ):=  "00000000000000000";
+        variable totalexponentt1 : integer;
+        variable posit3 : std_logic_vector ( nbofbits-1 downto 0 ):=  "0000000000000000";
+        variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ):=  "0000000000000000";
+        variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+        variable Sign : std_logic := '0';  
+            variable fraction_vectorr : std_logic_vector( nbofbits-1 downto 0 ):=  "0000001010000000";
+        begin
+    
+        if rising_edge(CLK) then
+            
+            posit3 := Positt3;
+            totalexponentt1 := to_integer(signed(totalexponent1));
+        
+                
+                if cases ="1111" then -- this is squared root
+                
+                
+                              
+                                totalexponenttt1 := shift_right(unsigned(std_logic_vector(abs(signed(totalexponent1)))),1); -- First i need to calculate the exponent of the square root, i can use a for loop but it will be an overkill.    
+                               modulo := to_integer(totalexponenttt1 mod  shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)); -- this is the number of exponent bits , here its 8 modulo 8 , which is 0,          
+                                nbofregimebits := to_integer(totalexponenttt1 / shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)); -- 8%8 =1 so i have 1 reigme bit             
+                                nboffractionbits := nbofbits -1 - nbofregimebits - to_integer(unsigned(es)) - 1; -- nb of bits for my fraction  
+                                fractionvalue   := std_logic_vector(unsigned(SquaredRoot) mod shift_left(to_unsigned(1,50),to_integer(totalexponenttt1)));  -- this is the remainder
+                            remainderdivided(nbofbits) := '1';
+                                
+                           
+        
+                            modulo_out <= std_logic_vector(to_unsigned(modulo,nbofbits));
+                            nbofregimebits_out1 <= std_Logic_vector(to_unsigned(nbofregimebits,nbofbits));
+                            nboffractionbits_out1 <= std_logic_vector(to_unsigned(nboffractionbits,nbofbits));
+                            fractionvalue_out <= fractionvalue;
+                            remainderdivided_out <= "10000000000000000";
+                            total_exponent_out1 <=  std_logic_vector(resize(totalexponenttt1,nbofbits));
+              
+                 
+               end if;
+               
+               
+               end if;
+               
+               end process;
+       
+ process(CLK)
+ 
+  variable totalexponentt : integer :=0;
+        variable modulo: integer := 0;
+        variable nboffractionbits : integer:=0;
+        variable nbofregimebits : integer:=0;
+        variable decrementexponent : integer:=0;
+        variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 ) := "00000000000000000";
+        
+        variable fractionvalue : std_logic_vector(49 downto 0 ) :=  "00000000000000000000000000000000000000000000000000";
+        variable totalexponenttt1: unsigned(nbofbitsforinteger downto 0 ):=  "00000000000000000";
+        variable remainderdivided : std_logic_vector(nbofbits downto 0 ):=  "00000000000000000";
+        variable totalexponentt1 : integer;
+        variable posit3 : std_logic_vector ( nbofbits-1 downto 0 ):=  "0000000000000000";
+        variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ):=  "0000000000000000";
+        variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+ begin
+ 
+ 
+ if rising_edge(CLK) then
+ if cases ="1111" then
+                modulo := to_integer(unsigned(modulo_out));
+                fractionvalue:=fractionvalue_out;
+                nboffractionbits:=to_integer(unsigned(nboffractionbits_out1));
+             
+                   totalexponenttt1 :=unsigned(resize(unsigned(total_exponent_out1),nbofbits+1));
+                 
+                 remainderdivided := remainderdivided_out; 
+                 
+                                         for i in  (nbofbits -1 ) downto (nbofbits - 3) loop 
+                                                    fractionvalue := std_logic_vector(shift_left(unsigned(fractionvalue),1));  
+                                                    if unsigned(fractionvalue) <shift_left(to_unsigned(1,50),to_integer(totalexponenttt1)) then    
+                                                    remainderdivided(i) := '0';
+                                                    else
+                                                    remainderdivided(i) := '1';
+                                                    if to_integer(unsigned(fractionvalue)) /= 0 then
+                                                    fractionvalue := std_logic_vector(unsigned(fractionvalue) mod shift_left(to_unsigned(1,50),to_integer(totalexponenttt1))) ; 
+                                                end if;
+                                                end if;
+                                        end loop;
+                                        fractionvalue_out2<=fractionvalue;
+                                        remainderdivided_out2 <= remainderdivided;
+                                                
+ end  if;
+ end if;
+ end process;
+ 
+      
+       
+        process(CLK)
+ 
+  variable totalexponentt : integer :=0;
+        variable modulo: integer := 0;
+        variable nboffractionbits : integer:=0;
+        variable nbofregimebits : integer:=0;
+        variable decrementexponent : integer:=0;
+        variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 ) := "00000000000000000";
+        
+        variable fractionvalue : std_logic_vector(49 downto 0 ) :=  "00000000000000000000000000000000000000000000000000";
+        variable totalexponenttt1: unsigned(nbofbitsforinteger downto 0 ):=  "00000000000000000";
+        variable remainderdivided : std_logic_vector(nbofbits downto 0 ):=  "00000000000000000";
+        variable totalexponentt1 : integer;
+        variable posit3 : std_logic_vector ( nbofbits-1 downto 0 ):=  "0000000000000000";
+        variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ):=  "0000000000000000";
+        variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+ begin
+ 
+ if rising_edge(CLK) then
+ 
+ if cases ="1111" then
+                modulo := to_integer(unsigned(modulo_out));
+                fractionvalue:=fractionvalue_out2;
+                nboffractionbits:=to_integer(unsigned(nboffractionbits_out1));
+                totalexponenttt1 :=unsigned(resize(unsigned(total_exponent_out1),nbofbits +1));
+                 remainderdivided := remainderdivided_out2; 
+       
+                                        
+                                        for i in  (nbofbits -4 ) downto nbofbits -6 loop 
+                                                fractionvalue := std_logic_vector(shift_left(unsigned(fractionvalue),1));
+                                                
+                                                if unsigned(fractionvalue) <shift_left(to_unsigned(1,50),to_integer(totalexponenttt1)) then   
+                                                
+                                                
+                                                remainderdivided(i) := '0';
+                                                else
+                                                remainderdivided(i) := '1';
+                                                if to_integer(unsigned(fractionvalue)) /= 0 then
+                                                fractionvalue := std_logic_vector(unsigned(fractionvalue) mod shift_left(to_unsigned(1,50),to_integer(totalexponenttt1))) ; 
+                                                end if;
+                                                end if;
+                                        end loop;
+                                     
+                                  
+                                    remainderdivided_out3<= remainderdivided;
+                                      fractionvalue_out3<=fractionvalue;
+                          end if;
+                          
+                          end if;
+                          end process;           
+                                     
+         process(CLK)
+                   
+                    variable totalexponentt : integer :=0;
+                          variable modulo: integer := 0;
+                          variable nboffractionbits : integer:=0;
+                          variable nbofregimebits : integer:=0;
+                          variable decrementexponent : integer:=0;
+                          variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 ) := "00000000000000000";
+                          
+                          variable fractionvalue : std_logic_vector(49 downto 0 ) :=  "00000000000000000000000000000000000000000000000000";
+                          variable totalexponenttt1: unsigned(nbofbitsforinteger downto 0 ):=  "00000000000000000";
+                          variable remainderdivided : std_logic_vector(nbofbits downto 0 ):=  "00000000000000000";
+                          variable totalexponentt1 : integer;
+                          variable posit3 : std_logic_vector ( nbofbits-1 downto 0 ):=  "0000000000000000";
+                          variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ):=  "0000000000000000";
+                          variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+                   begin
+                   
+                   if rising_edge(CLK) then
+                   
+                   
+                   if cases ="1111" then
+                      modulo := to_integer(unsigned(modulo_out));
+                      fractionvalue:=fractionvalue_out3;
+                      nboffractionbits:=to_integer(unsigned(nboffractionbits_out1));
+                    
+                   totalexponenttt1 :=unsigned(resize(unsigned(total_exponent_out1),nbofbits +1));
+                       remainderdivided := remainderdivided_out3; 
+                                                 
+                                    
+                                    
+                                    
+                           for i in  (nbofbits -7 ) downto nbofbits -9 loop 
+                                    fractionvalue := std_logic_vector(shift_left(unsigned(fractionvalue),1));
+                                    
+                                    if unsigned(fractionvalue) <shift_left(to_unsigned(1,50),to_integer(totalexponenttt1)) then   
+                                    
+                                    
+                                    remainderdivided(i) := '0';
+                                    else
+                                    remainderdivided(i) := '1';
+                                    if to_integer(unsigned(fractionvalue)) /= 0 then
+                                    fractionvalue := std_logic_vector(unsigned(fractionvalue) mod shift_left(to_unsigned(1,50),to_integer(totalexponenttt1))) ; 
+                                    end if;
+                                    end if;
+                                end loop;
+                                    
+                                  remainderdivided_out4 <= remainderdivided;
+                                                                 
+                                  fractionvalue_out4<=fractionvalue;
+                      end if;
+                      
+                      end if;
+                      end process;           
+          process(CLK)
+                                
+                                 variable totalexponentt : integer :=0;
+                                       variable modulo: integer := 0;
+                                       variable nboffractionbits : integer:=0;
+                                       variable nbofregimebits : integer:=0;
+                                       variable decrementexponent : integer:=0;
+                                       variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 ) := "00000000000000000";
+                                       
+                                       variable fractionvalue : std_logic_vector(49 downto 0 ) :=  "00000000000000000000000000000000000000000000000000";
+                                       variable totalexponenttt1: unsigned(nbofbitsforinteger downto 0 ):=  "00000000000000000";
+                                       variable remainderdivided : std_logic_vector(nbofbits downto 0 ):=  "00000000000000000";
+                                       variable totalexponentt1 : integer;
+                                       variable posit3 : std_logic_vector ( nbofbits-1 downto 0 ):=  "0000000000000000";
+                                       variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ):=  "0000000000000000";
+                                       variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+                                begin
+                                
+                                if rising_edge(CLK) then
+                                
+                                if cases ="1111" then
+                                   modulo := to_integer(unsigned(modulo_out));
+                                   fractionvalue:=fractionvalue_out4;
+                                   nboffractionbits:=to_integer(unsigned(nboffractionbits_out1));
+                               
+                                  totalexponenttt1 :=unsigned(resize(unsigned(total_exponent_out1),nbofbits +1));
+                                    remainderdivided := remainderdivided_out4; 
+                                                              
+                                                                                                     
+                                                
+                                        for i in  (nbofbits -10 ) downto nbofbits -12 loop 
+                                                fractionvalue := std_logic_vector(shift_left(unsigned(fractionvalue),1));
+                                                
+                                                if unsigned(fractionvalue) <shift_left(to_unsigned(1,50),to_integer(totalexponenttt1)) then   
+                                                
+                                                
+                                                remainderdivided(i) := '0';
+                                                else
+                                                remainderdivided(i) := '1';
+                                                if to_integer(unsigned(fractionvalue)) /= 0 then
+                                                fractionvalue := std_logic_vector(unsigned(fractionvalue) mod shift_left(to_unsigned(1,50),to_integer(totalexponenttt1))) ; 
+                                                end if;
+                                                end if;
+                                        end loop;
+                                        
+                                         remainderdivided_out5 <= remainderdivided;
+                                                                         
+                                          fractionvalue_out5<=fractionvalue;
+                                                 end if;
+                                                 
+                                                 end if;
+                                                 end process;     
+                           
+process(CLK)
+        
+         variable totalexponentt : integer :=0;
+               variable modulo: integer := 0;
+               variable nboffractionbits : integer:=0;
+               variable nbofregimebits : integer:=0;
+               variable decrementexponent : integer:=0;
+               variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 ) := "00000000000000000";
+               
+               variable fractionvalue : std_logic_vector(49 downto 0 ) :=  "00000000000000000000000000000000000000000000000000";
+               variable totalexponenttt1: unsigned(nbofbitsforinteger downto 0 ):=  "00000000000000000";
+               variable remainderdivided : std_logic_vector(nbofbits downto 0 ):=  "00000000000000000";
+               variable totalexponentt1 : integer;
+               variable posit3 : std_logic_vector ( nbofbits-1 downto 0 ):=  "0000000000000000";
+               variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ):=  "0000000000000000";
+               variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+        begin
+        
+        if rising_edge(CLK) then
+        
+        if cases ="1111" then
+        
+           modulo := to_integer(unsigned(modulo_out));
+           fractionvalue:=fractionvalue_out5;
+           nboffractionbits:=to_integer(unsigned(nboffractionbits_out1));
+        
+              totalexponenttt1 :=unsigned(resize(unsigned(total_exponent_out1),nbofbits +1));
+            remainderdivided := remainderdivided_out5; 
+                                                    
+                        for i in  (nbofbits -13 ) downto nbofbits -15 loop 
+                                fractionvalue := std_logic_vector(shift_left(unsigned(fractionvalue),1));
+                                
+                                if unsigned(fractionvalue) <shift_left(to_unsigned(1,50),to_integer(totalexponenttt1)) then   
+                                
+                                
+                                remainderdivided(i) := '0';
+                                else
+                                remainderdivided(i) := '1';
+                                if to_integer(unsigned(fractionvalue)) /= 0 then
+                                fractionvalue := std_logic_vector(unsigned(fractionvalue) mod shift_left(to_unsigned(1,50),to_integer(totalexponenttt1))) ; 
+                                end if;
+                                end if;                 
+                                           end loop;
+
+                                      fractionvalue_out6<=fractionvalue;
+                                remainderdivided_out6 <= remainderdivided;
+                                                                       
+                   end if;
+                                                                                      
+                      end if;
+                      end process;   
+              process(CLK)
+              
+              
+                       variable totalexponentt : integer :=0;
+                             variable modulo: integer := 0;
+                             variable nboffractionbits : integer:=0;
+                             variable nbofregimebits : integer:=0;
+                             variable decrementexponent : integer:=0;
+                             variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 ) := "00000000000000000";
+                             
+                             variable fractionvalue : std_logic_vector(49 downto 0 ) :=  "00000000000000000000000000000000000000000000000000";
+                             variable totalexponenttt1: unsigned(nbofbitsforinteger downto 0 ):=  "00000000000000000";
+                             variable remainderdivided : std_logic_vector(nbofbits downto 0 ):=  "00000000000000000";
+                             variable totalexponentt1 : integer;
+                             variable posit3 : std_logic_vector ( nbofbits-1 downto 0 ):=  "0000000000000000";
+                             variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ):=  "0000000000000000";
+                             variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+                             variable Sign : std_Logic;
+                             
+              begin
+              
+              if rising_edge(CLK) then
+              if cases = "1111" then
+              modulo := to_integer(unsigned(modulo_out));
+             fractionvalue:=fractionvalue_out6;
+             nboffractionbits:=to_integer(unsigned(nboffractionbits_out1));
+       
+            totalexponenttt1 :=unsigned(resize(unsigned(total_exponent_out1),nbofbits +1));
+              remainderdivided := remainderdivided_out6; 
+        
+                  
+                     if unsigned(fractionvalue) <shift_left(to_unsigned(1,50),to_integer(totalexponenttt1)) then   
+                                                                     
+                                                                     
+                     remainderdivided(0) := '0';
+                     else
+                     remainderdivided(0) := '1';
+                     if to_integer(unsigned(fractionvalue)) /= 0 then
+                     fractionvalue := std_logic_vector(unsigned(fractionvalue) mod shift_left(to_unsigned(1,50),to_integer(totalexponenttt1))) ; 
+                     end if;
+                     
+                     end if;
+                                     
+                                          
+                                          
+                    decrementexponent:=0;
+                   
+                 
+                     if decrementexponent > modulo then
+                     modulo := 0;
+                     else
+                     modulo := modulo - decrementexponent;
+                     end if;
+                 
+                  fraction_vector := remainderdivided (nbofbits-1 downto 0 );
+                  exponent_vector := std_logic_vector(shift_left( to_unsigned(modulo,nbofbits),(nbofbits-1)-(to_integer(unsigned(es))-1)));
+                    
+                                 
+                                                      
+                                     if ( Posit1(nbofbits-1) = '0')   then     
+                                     
+                                       
+                                        Sign := '0';           
+                                               
+                                        --nbofregimebits is known here from previous calculations
+                                        --nboffractionbits is also known from previous calculations
+                                        --totalexponent_integer is also knwofn from previous ccalulcations;
+                
+                                          elsif  (Posit1(nbofbits-1) ='1' ) then
+                                          
+                                           
+                                             Sign := '1';   
+                                             
+                                          --Posit4 <= '0' & std_logic_vector(to_unsigned(0,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & remainderdivided ( nbofbits -1 downto nbofbits - nboffractionbits);
+                                           
+                                           
+                                           end if;
+                                         
+                       fraction_vector_out1 <= remainderdivided (nbofbits downto 1 );
+                       exponent_vector_out1 <= exponent_vector;                   
+                       Sign_out1 <= Sign;
+                end if;
+                
+         --   end if;
+            
+        end if;
+        
+end process;
+
+
+
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto DIVISION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    process(CLK)
+  
+    variable totalexponentt1 : integer :=0;
+    variable totalexponentt2 : integer:=0;
+    variable totalexponentt : integer :=0;
+    variable modulo: integer :=0 ;
+    variable nboffractionbits : integer :=0;   
+    variable nbofregimebits : integer :=0;
+    variable posit3 : std_logic_vector(nbofbits -1 downto 0 ) := "0000000000000000";
+    variable fractionvalue : std_logic_vector(49 downto 0 ):="00000000000000000000000000000000000000000000000000";
+    variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+    variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ):= "0000000000000000";
+    variable Sign : std_logic := '0';
+ 
+    begin
+    
+            if rising_edge(CLK) then
+            
+              --   if reset ='1' then
+                -- Posit4 <= x"0000";
+                -- else
+                 
+                totalexponentt1 := to_integer(signed(totalexponent1));
+                totalexponentt2 := to_integer(signed(totalexponent2));
+                
+                    if cases ="1000"  then  -- then do division 
+                    
+                    -- I am receiving the fraction part and howmuch to subtract from exponent from the PLU unit so.
+                    
+                                    
+                                    totalexponentt := totalexponentt1 - totalexponentt2 - to_integer(unsigned(howmuchtoshiftsubtract)); 
+                                    
+                                    modulo := totalexponentt mod  to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)); -- this is the number of exponent bits
+                                    
+                                
+                                    nbofregimebits := totalexponentt / to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1));
+                                 
+                                    
+                                    nboffractionbits := nbofbits -1 - nbofregimebits - to_integer(unsigned(es)) - 1; 
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    if ( Posit1(nbofbits-1) = '0' and Posit2(nbofbits-1) = '0'  and totalexponentt >= 0) or (Posit1(nbofbits-1) = '1' and Posit2(nbofbits-1) = '1' and totalexponentt >= 0)  then
+                                    
+                                    fraction_vector := positt3; -- here we can see our fraction posit3 is in our favor and starts from 15
+                                     exponent_vector := std_logic_vector(shift_left( to_unsigned(modulo,nbofbits),(nbofbits-1)-(to_integer(unsigned(es))-1)));
+                                     Sign := '0';   
+                                     
+                                    --Posit4 <= '0' & std_logic_vector(to_signed(1,nbofregimebits)) & '0' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nbofbits -1 downto nbofbits - nboffractionbits );
+                                  --  elsif  (Posit1(nbofbits-1) ='0' and Posit2(nbofbits-1)='0' and totalexponentt < 0 ) or (Posit1(nbofbits-1) ='1' and Posit2(nbofbits-1)='1' and totalexponentt < 0) then                
+                                    --taken care of in the end
+                                   -- Posit4 <= '0' & std_logic_vector(to_unsigned(0,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3( nbofbits -1 downto nbofbits-nboffractionbits  );
+                                    
+                                    elsif  (Posit1(nbofbits-1) ='1' and Posit2(nbofbits-1)='0' and totalexponentt >= 0 ) or (Posit1(nbofbits-1) ='0' and Posit2(nbofbits-1)='1' and totalexponentt >= 0 )  then
+                                   
+                                     fraction_vector := positt3; -- here we can see our fraction posit3 is in our favor and starts from 15
+                                     exponent_vector := std_logic_vector(shift_left( to_unsigned(modulo,nbofbits),(nbofbits-1)-(to_integer(unsigned(es))-1)));
+                                     Sign := '1';   
+                                   
+                                   -- Posit4forinverse := '0' & std_logic_vector(to_unsigned(0,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nbofbits -1 downto nbofbits - nboffractionbits );
+                                   -- Posit4 <= std_logic_vector( to_unsigned(to_integer(Not unsigned(Posit4forinverse)) + 1,nbofbits));
+                                    else
+                                      fraction_vector := positt3; -- here we can see our fraction posit3 is in our favor and starts from 15
+                                     exponent_vector := std_logic_vector(shift_left( to_unsigned(modulo,nbofbits),(nbofbits-1)-(to_integer(unsigned(es))-1)));
+                                     Sign := '1';   
+                                    
+                                    
+                                    
+                                   -- Posit4forinverse := '0' & std_logic_vector(to_signed(1,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nbofbits -1 downto nbofbits - nboffractionbits );
+                                   -- Posit4 <= std_logic_vector( to_unsigned(to_integer(Not unsigned(Posit4forinverse)) + 1,nbofbits));
+                                    
+                                    end if;
+                                   fraction_vector_out2 <= fraction_vector;
+                                    exponent_vector_out2 <= exponent_vector;
+                                    Sign_out2 <= Sign;
+                                    nbofregimebits_out2 <= std_logic_vector(to_unsigned(nbofregimebits,nbofbitsforinteger));
+                                    total_exponent_out2 <= std_logic_vector(to_unsigned(totalexponentt,nbofbitsforinteger));
+                                   nboffractionbits_out2 <= std_logic_vector(to_unsigned(nboffractionbits,nbofbits));
+                        end if;
+                
+           -- end if ;
+        end if;
+    
+    
+    end process;
+    
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto MULTIPLICATION----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+ Process(CLK)
+     variable exponent1 : std_logic_vector(nbofbitsforinteger downto 0 ) := "00000000000000000"; 
+     
+     variable exponent2 : std_logic_vector(nbofbitsforinteger downto 0 ):= "00000000000000000" ; 
+     variable nbofbitfraction1 :  integer := 0;
+     variable nbofbitfraction2 :   integer := 0;
+     variable nbofbitexponent1 :  integer := 0;
+     variable nbofbitexponent2 :  integer := 0;
+     variable expo1value :  integer := 0;
+     variable expo2value :  integer := 0;
+     variable posit3: std_logic_vector(nbofbits -1 downto 0 ) := "0000000000000000";
+     variable totalexponentt1 : integer := 0;
+     variable totalexponentt2 : integer := 0;
+     variable totalexponentt : integer := 0;
+     variable modulo: integer := 0;
+     variable nboffractionbits : integer := 0;
+     variable nbofbitfractionaftermultiplication : integer := 0;
+     variable nbofregimebits : integer := 0;
+     variable fractionformultiplication : std_logic_vector(nbofbitsformultiplication -1 downto 0) := "00000000000000000000000000000000";
+     variable decrementexponent : integer := 0;
+     variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 ) := "00000000000000000";
+     
+     variable fractionvalue : std_logic_vector(49 downto 0 ) := "00000000000000000000000000000000000000000000000000" ;
+
+     variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ) := "0000000000000000";
+     variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ) := "0000000000000000";
+     variable Sign : std_logic := '0';
+     variable mask2 : std_Logic_vector(nbofbitsformultiplication -1 downto 0 ) := "00000000000000000000000000000000";
+     variable var2 : std_Logic_vector( nbofbitsformultiplication -1 downto 0 ) := "00000000000000000000000000000000";
+     variable nbofbitfraction3 : integer := 0;
+     
+     begin
+     
+         if rising_edge(CLK) then
+         
+           --   if reset ='1' then
+           --   Posit4 <= x"0000";
+           --   else
+              nbofbitfraction1 := to_integer(unsigned(  nbofbitfractionn1)) ;
+              nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2)) ;
+             posit3 := Positt3;
+             totalexponentt1 := to_integer(signed(totalexponent1));
+             totalexponentt2 := to_integer(signed(totalexponent2));
+             
+            
+            
+                    if cases= "0100" then -- do multiplication
+                    
+                                            totalexponentt := totalexponentt1 + totalexponentt2; 
+                                            
+                                            modulo := totalexponentt mod  to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)); -- this is the value of exponent bits
+                                            
+                                           
+                                            
+                                            nbofregimebits := totalexponentt / to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)); --number of regime bits
+                                            
+                                          
+                                            
+                                            nboffractionbits := nbofbits -1 - nbofregimebits - to_integer(unsigned(es)) - 1;  --number of fraction bits
+                                            
+                                            decrementexponent :=0;
+                                            
+                                        if (nbofbitfraction1) >= nbofbitfraction2 then
+                                        
+                                            nbofbitfraction3 := nbofbitfraction2;
+                                        else
+                                                nbofbitfraction3 := nbofbitfraction1;
+                                        end if;
+                                        
+                                        
+                                        
+                                        
+                                        if fractionformultiplication(((nbofbitfraction3+1)*2)-1) = '1' then
+                                             modulo := modulo + 1;
+                                             
+                                            if modulo >= to_integer(shift_left(to_unsigned(1,nbofbitsformultiplication),to_integer(unsigned(es)))) then 
+                                            modulo := to_integer(shift_left(to_unsigned(1,nbofbitsformultiplication),to_integer(unsigned(es))));
+                                            end if;
+                                            
+                                            
+                                        end if;
+                                        
+                                         for i in  0 to nbofbits+4 loop              
+                                   if i <= nbofbitfractionaftermultiplication then
+                                      if to_integer(unsigned(fractionformultiplication)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction3*2)) then
+                                      
+                                      fractionformultiplication  := std_logic_vector(shift_left(unsigned(fractionformultiplication),1));
+                                      decrementexponent := decrementexponent + 1; -- used to decrement exponent in case my i cant subtract 2^16 from the fraction.
+                                      end if;
+                                    end if;
+                                     end loop;  
+                                            
+                                            fractionformultiplication := std_logic_vector(unsigned(fractionformultiplicationn) - shift_left(to_unsigned(1, (nbofbitsformultiplication)),(nbofbitfraction3*2) )) ;
+                                            
+                                            nbofbitfractionaftermultiplication := (nbofbitfraction3+1)*2;
+                                             --mask2 := std_logic_vector(to_signed(1,nbofbitsformultiplication)); --creating a mask to get fractionformultiplication((nbofbitfraction1*2)-1 downto 0 ))
+                                          --  mask2 := std_logic_vector(shift_right(unsigned(mask2),(nbofbitsformultiplication-1)-(nbofbitfractionaftermultiplication)));
+                                           -- var2 := std_logic_vector( unsigned(mask2) and unsigned( fractionformultiplication));
+                                            --posit3 := std_logic_vector(resize(shift_right(unsigned(fractionformultiplication((nbofbitfraction1*2)-1 downto 0 )),(nbofbitfraction1*2)-nboffractionbits),nbofbits));
+                                            
+                                            
+                                            posit3 := var2 ( nbofbits-1 downto 0 )   ;
+                                                       
+                                                    if decrementexponent >= to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)) then
+                                                        decrementexponent := decrementexponent - to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1));
+                                                       nbofregimebits := nbofregimebits +1;
+                                                       modulo := modulo - decrementexponent;
+                                                      
+                                                       
+                                                       nboffractionbits := nboffractionbits -1 ;
+                                                   else 
+                                                   
+                                                        modulo := modulo - decrementexponent;
+                                                        
+                                                   end if;
+                                                   
+                                                   if modulo < 0 then
+                                                   modulo :=0;
+                                                   
+                                                   end if;
+                                                   
+                                                    
+                                           
+                    -- I need to check the upper  two most signifcant bits of fractionformultiplication after subtracting 2^16 for instace, if i am using 16 bits then 
+                    --fractionformultiplication will be 18 bits so i need to check bit 18, if it is one i will incremenet my exponent , i will take the bits from 0 to 15
+                                  -- here we can see our fraction posit3 starts at nboffractionbits -1 downto 0 so need to shift it.
+                               exponent_vector := std_logic_vector(shift_left( to_unsigned(modulo,nbofbits),(nbofbits-1)-(to_integer(unsigned(es))-1)));
+                        
+                                        if ( Posit1(nbofbits-1) = '0' and Posit2(nbofbits-1) = '0' ) or (Posit1(nbofbits-1) = '1' and Posit2(nbofbits-1) = '1' ) then
+                                      
+                                         Sign := '0';   
+                                          
+                                        else
+                            
+                                          Sign := '1';
+                                         END IF ;
+
+                                    
+                                              
+                       var2 := std_logic_vector(shift_right(unsigned(fractionformultiplication),nbofbitfraction3*2 - nbofbits));
+                                           
+                        fraction_vector_out3 <= var2(nbofbits -1 downto 0 );
+                         exponent_vector_out3 <= exponent_vector;
+                        Sign_out3 <= Sign;
+                         nbofregimebits_out3 <= std_logic_vector(to_unsigned(nbofregimebits,nbofbitsforinteger));
+                         total_exponent_out3 <= std_logic_vector(to_unsigned(totalexponentt,nbofbitsforinteger));
+                         nboffractionbits_out3 <= std_logic_vector(to_unsigned(nboffractionbits,nbofbitsforinteger));
+                    end if;
+      
+    end if;
+
+end process;
+
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Moving onto ADD/SUBTRACT----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+process(CLK)
 
 variable exponent1 : std_logic_vector(nbofbitsforinteger downto 0 ) ; 
 
@@ -44,6 +854,9 @@ variable nbofbitfraction2 :   integer;
 variable nbofbitexponent1 :  integer;
 variable nbofbitexponent2 :  integer;
 variable nbofregimebit1 : integer;
+
+     variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 ) := "0000000000000000";
+     variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 ) := "0000000000000000";
 variable nbofregimebit2 :  integer;
 variable expo1value :  integer;
 variable expo2value :  integer;
@@ -58,332 +871,730 @@ variable nbofbitfractionaftermultiplication : integer;
 variable nbofregimebits : integer;
 variable fractionformultiplication : std_logic_vector(nbofbitsformultiplication -1 downto 0);
 variable decrementexponent : integer;
+variable totalexponenttt : unsigned ( nbofbitsforinteger downto 0 );
+
+variable fractionvalue : std_logic_vector(49 downto 0 );
+variable totalexponenttt1: unsigned(nbofbitsforinteger downto 0 );
+variable remainderdivided : std_logic_vector(nbofbits downto 0 );
+variable mask1 : std_Logic_vector( nbofbits-1 downto 0 );
+VARIABLE var1 :  std_Logic_vector( nbofbits-1 downto 0 );
+
+variable Sign : std_logic;
+variable totalexponent_integer : integer;
+variable mask2 : std_Logic_vector(nbofbitsformultiplication -1 downto 0 );
+variable var2 : std_Logic_vector( nbofbitsformultiplication -1 downto 0 );
+variable exponent3 : std_logic_vector ( nbofbitsforinteger  downto 0 );
+variable expo3value : integer;
+variable nbofbitfraction3 : integer;
+variable posit6 : std_logic_vector ( nbofbits -1 downto 0 );
+variable nbofbitexponent3 : integer;
+variable nbofregimebit3 : integer;
+variable totalexponent3 : integer;
+begin
+
+    if rising_edge(CLK) then
+    
+   --  if reset ='1' then
+    -- Posit4 <= x"0000";
+     --else
+     nbofbitfraction1 := to_integer(unsigned(  nbofbitfractionn1)) ;
+     nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2)) ;
+     nbofbitexponent1 := to_integer(unsigned(nbofbitexponentt1)) ;
+     nbofbitexponent2 := to_integer(unsigned(nbofbitexponentt2)) ;
+     nbofregimebit1 := to_integer(unsigned(nbofregimebitt1)) ;
+     nbofregimebit2 := to_integer(unsigned(nbofregimebitt2)) ;
+     expo1value :=  to_integer(unsigned(expo1valuee)) ;
+     expo2value := to_integer(unsigned(expo2valuee)) ;
+    posit3 := Positt3;
+    totalexponentt1 := to_integer(signed(totalexponent1));
+    totalexponentt2 := to_integer(signed(totalexponent2));
+    
+            
+            if (cases = "0000" or cases="0001" ) then
+                          
+                        if flag1forexponent = '1' then
+                            
+                         expo1value := expo1value - to_integer(unsigned(howmuchtoshiftsubtract));
+                    
+                            if expo1value < 0 then
+                            expo1value := 0 ;
+                            end if;
+                         
+                        end if ;
+                    
+                        if flag2forexponent = '1' then
+                        
+                            expo2value := expo2value - to_integer(unsigned(howmuchtoshiftsubtract));
+                    
+                            if expo2value < 0 then
+                            expo2value := 0 ;
+                            end if;
+                        end if;
+                    exponent1 := std_logic_vector(to_unsigned(expo1value, nbofbitsforinteger+1 ));
+                    exponent2 := std_logic_vector(to_unsigned(expo2value, nbofbitsforinteger+1));
+                    
+                    if totalexponentt1>totalexponentt2 then
+                    
+                        expo3value := expo1value;
+                        nbofbitfraction3 := nbofbitfraction1;
+                        posit6 := Posit1;
+                        exponent3 := exponent1;
+                        nbofbitexponent3 := nbofbitexponent1 ;
+                        nbofregimebit3 := nbofregimebit1;
+                        totalexponent3 := totalexponentt1;
+                     
+                     else
+                        expo3value := expo2value;
+                        nbofbitfraction3:=nbofbitfraction2;
+                        Posit6 := Posit2 ;
+                         exponent3 := exponent2;
+                         nbofbitexponent3 := nbofbitexponent2 ;
+                         nbofregimebit3 := nbofregimebit2;
+                         totalexponent3 := totalexponentt2;
+                     end if;
+                    
+                    
+                        if  ( Positt3(nbofbitfraction3) = '1')  then --This means my fraction overflowed, so add one to the value of exponent
+                            expo3value := expo3value+1 ; 
+
+                            exponent3:= std_logic_vector(to_unsigned(expo3value, nbofbitsforinteger+1));
+                            
+                            posit3 := std_logic_vector(shift_right(unsigned(Positt3),1));
+                            
+                            if exponent3(nbofbitexponent1) = '1' then -- my exponent value overflowed so limit it to es 
+
+                                exponent3 := std_logic_vector(shift_left(to_unsigned(2,nbofbitsforinteger+1),to_integer(unsigned(es))-1)); 
+                                                                
+                                expo3value:= to_integer(unsigned(exponent3)) ;
+                                
+                            end if;
+                            
+                        end if;        
+                                    
+                      fraction_vector := std_logic_vector(shift_left(unsigned(Positt3),(nbofbits-1) - (nbofbitfraction3-1)));    -- here we can see our fraction posit3 starts at nboffractionbits -1 downto 0 so need to shift it.
+                   exponent_vector := std_logic_vector(shift_left( resize(unsigned(exponent3),nbofbits),(nbofbits-1)-(nbofbitexponent3-1)));
+                    nbofregimebits := nbofregimebit3;
+                     if   Posit6(nbofbits-1) ='1'  then
+                  
+                         Sign := '1';
+                         nbofregimebits := nbofregimebit3;
+                        --Posit4forinverse :=  '0' & std_logic_vector(to_signed(-1,nbofregimebit1)) & '0' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1  downto 0 );
+                           -- Posit4<= '0' & std_logic_vector(to_signed(-1,nbofregimebit1)) & '0' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1  downto 0 );
+                        
+                        else
+                    
+                           Sign := '0';
+                            --Posit4forinverse :='0' & std_logic_vector(to_unsigned(0,nbofregimebit2)) & '1' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
+                            --Posit4<= '0' & std_logic_vector(to_unsigned(0,nbofregimebit2)) & '1' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
+                        end if; 
+                    
+                    
+                    
+                    nbofregimebits_out4 <= std_logic_vector( to_unsigned(nbofregimebits,nbofbitsforinteger));
+                    fraction_vector_out4 <= fraction_vector;
+                    exponent_vector_out4 <= exponent_vector;
+                    Sign_out4 <= Sign;
+                    total_exponent_out4 <= std_logic_vector(to_unsigned(totalexponent3,nbofbitsforinteger));
+                    
+                    nboffractionbits_out4 <= std_logic_vector(to_unsigned(nbofbitfraction3,nbofbitsforinteger));
+        end if;
+    -- end if;
+     
+    end if;
+
+end process;
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------Final Result, all must pass here----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+process(CLK) 
+
+
+
+variable totalexponentt : std_logic_vector(nbofbits -1 downto 0);
+variable nboffractionbits : std_logic_vector(nbofbits -1 downto 0 );
+variable nbofregimebits : std_logic_vector(nbofbits -1 downto 0 );
+variable fraction_vector : std_logic_vector( nbofbits-1 downto 0 );
+variable exponent_vector : std_logic_vector( nbofbits-1 downto 0 );
+variable Sign : std_logic;
+
+begin
+
+if rising_edge(CLK) then 
+
+           --  if reset ='1' then
+            -- Posit4 <= x"0000";
+           --  else
+            if  cases = "1111" then
+                    nbofregimebits := nbofregimebits_out1;
+                    fraction_vector := fraction_vector_out1;
+                    exponent_vector := exponent_vector_out1;
+                    Sign := Sign_out1;
+                    totalexponentt :=total_exponent_out1 ; 
+                    nboffractionbits := nboffractionbits_out1;
+    
+                
+                elsif cases = "1000" then
+                
+                        nbofregimebits := nbofregimebits_out2;
+                        fraction_vector := fraction_vector_out2;
+                        exponent_vector := exponent_vector_out2;
+                        Sign := Sign_out2;
+                        totalexponentt :=total_exponent_out2 ; 
+                        nboffractionbits := nboffractionbits_out2;
+                
+                elsif cases ="0100" then
+                
+                
+                 nbofregimebits := nbofregimebits_out3;
+                  nbofregimebits := nbofregimebits_out3;
+                                fraction_vector := fraction_vector_out3;
+                                exponent_vector := exponent_vector_out3;
+                                Sign := Sign_out3;
+                                totalexponentt:=total_exponent_out3 ; 
+                                nboffractionbits := nboffractionbits_out3;
+                           
+                           
+                  else
+                            nbofregimebits := nbofregimebits_out4;
+                          fraction_vector := fraction_vector_out4;
+                          exponent_vector := exponent_vector_out4;
+                          Sign := Sign_out4;
+                          totalexponentt :=total_exponent_out4 ; 
+                          nboffractionbits := nboffractionbits_out4;
+             end  if;
+                                    
+   
+                
+                    nbofregimebits_out <= nbofregimebits;
+                    fraction_vector_out <= fraction_vector;
+                    exponent_vector_out<= exponent_vector;
+                    Sign_out  <=  Sign ;
+                    totalexponent_out <= totalexponentt;
+                    nboffractionbits_out <= nboffractionbits;
+
+           
+end  if;
+                
+                
+                
+end process;
+
+
+
+process(CLK)
+
+
+
+
+
+
+variable flag_regime : integer;
+variable flag_exponent: integer;
+variable flag_fraction : integer;
+variable Posit5 : std_logic_vector(nbofbits - 2 downto 0 );
+variable regime_bit : std_logic;
+variable counter : integer;
+
 begin
 
 
- nbofbitfraction1 := to_integer(unsigned(  nbofbitfractionn1)) ;
- nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2)) ;
- nbofbitexponent1 := to_integer(unsigned(nbofbitexponentt1)) ;
- nbofbitexponent2 := to_integer(unsigned(nbofbitexponentt2)) ;
- nbofregimebit1 := to_integer(unsigned(nbofregimebitt1)) ;
- nbofregimebit2 := to_integer(unsigned(nbofregimebitt2)) ;
- expo1value :=  to_integer(unsigned(expo1valuee)) ;
- expo2value := to_integer(unsigned(expo2valuee)) ;
-posit3 := Positt3;
-totalexponentt1 := to_integer(signed(totalexponent1));
-totalexponentt2 := to_integer(signed(totalexponent2));
+
+if rising_edge(CLK) then
 
 
-if cases ="1000" then  -- then do division
+        flag_regime := to_integer(unsigned( nbofregimebits_out));
+        flag_exponent := -10;
+        flag_fraction := 0;
+        counter := 0;
 
--- I am receiving the fraction part and howmuch to subtract from exponent from the PLU unit so .
-
-                
-                totalexponentt := totalexponentt1 - totalexponentt2 - to_integer(unsigned(howmuchtoshiftsubtract)); 
-                
-                modulo := totalexponentt mod  to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)); -- this is the number of exponent bits
-                
-                
-                
-                
-                
-                 
-                
-                
-                
-                nbofregimebits := totalexponentt / to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1));
-                
-                
-                
-                
-                nboffractionbits := nbofbits -1 - nbofregimebits - to_integer(unsigned(es)) - 1; 
-                
-                
-                
-                
-                
-                
-                if ( Posit1(nbofbits-1) = '0' and Posit2(nbofbits-1) = '0'  and totalexponentt >= 0) or (Posit1(nbofbits-1) = '1' and Posit2(nbofbits-1) = '1' and totalexponentt >= 0)  then
-                
-                
-                Posit4 <= '0' & std_logic_vector(to_signed(1,nbofregimebits)) & '0' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nbofbits -1 downto nbofbits - nboffractionbits );
-                elsif  (Posit1(nbofbits-1) ='0' and Posit2(nbofbits-1)='0' and totalexponentt < 0 ) or (Posit1(nbofbits-1) ='1' and Posit2(nbofbits-1)='1' and totalexponentt < 0) then
-                
-                
-                Posit4 <= '0' & std_logic_vector(to_unsigned(0,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3( nbofbits -1 downto nbofbits-nboffractionbits  );
-                
-                elsif  (Posit1(nbofbits-1) ='1' and Posit2(nbofbits-1)='0' and totalexponentt >= 0 ) or (Posit1(nbofbits-1) ='0' and Posit2(nbofbits-1)='1' and totalexponentt >= 0 )  then
-                Posit4forinverse := '0' & std_logic_vector(to_unsigned(0,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nbofbits -1 downto nbofbits - nboffractionbits );
-                Posit4 <= std_logic_vector( to_unsigned(to_integer(Not unsigned(Posit4forinverse)) + 1,nbofbits));
-                else
-                Posit4forinverse := '0' & std_logic_vector(to_signed(1,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nbofbits -1 downto nbofbits - nboffractionbits );
-                Posit4 <= std_logic_vector( to_unsigned(to_integer(Not unsigned(Posit4forinverse)) + 1,nbofbits));
-                
-                end if;
-
-
-end if ;
-
-
-
-
-
-
-
- 
-
-
-if cases= "0100" then -- do multiplication
-
-                        totalexponentt := totalexponentt1 + totalexponentt2; 
-                        
-                        modulo := totalexponentt mod  to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)); -- this is the number of exponent bits
-                        
-                        totalexponentt := totalexponentt + modulo ;  -- add the modulo to get a perfect division instead ofhaving 8/3 ill have 9 /3 and then subtract a one later on
-                        
-                        
-                        if modulo /= 0 then 
-                        
-                        nbofregimebits := ( totalexponentt / to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)))-1; -- since  i added a modulo to my totalexponent thats why i need the -1 
-                        
-                        else 
-                        
-                        nbofregimebits := totalexponentt / to_integer(unsigned(es));
-                        
-                        end if;
-                        
-                        nboffractionbits := nbofbits -1 - nbofregimebits - to_integer(unsigned(es)) - 1; 
-                        
-                        decrementexponent :=0;
-
-
-           if nbofbitfraction1 <= nbofbitfraction2 then
-                        
-                        fractionformultiplication := std_logic_vector(unsigned(fractionformultiplicationn) - shift_left(to_unsigned(1, (nbofbitsformultiplication)),(nbofbitfraction1*2) )) ;
-                        
-                        nbofbitfractionaftermultiplication := (nbofbitfraction1+1)*2;
-                        posit3 := std_logic_vector(resize(shift_right(unsigned(fractionformultiplication((nbofbitfraction1*2)-1 downto 0 )),(nbofbitfraction1*2)-nboffractionbits),nbofbits));
-                        
-                         for i in  0 to (nbofbitfractionaftermultiplication) loop
-                                               if to_integer(unsigned(fractionformultiplication)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction1*2)) then
-                                               
-                                               fractionformultiplication  := std_logic_vector(shift_left(unsigned(fractionformultiplication),1));
-                                               decrementexponent := decrementexponent + 1; -- used to decrement exponent in case my i cant subtract 2^16 from the fraction.
-                                               end if;
-                                               end loop;      
-                                if decrementexponent >= to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)) then
-                                decrementexponent := decrementexponent - to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1));
-                               nbofregimebits := nbofregimebits +1;
-                               modulo := modulo - decrementexponent;
-                               nboffractionbits := nboffractionbits -1 ;
-                               else 
-                                modulo := modulo - decrementexponent;
-                                end if;
-                               if modulo <= 0 then 
-                               modulo := 0 ;
-                               end if;
-                               
-                                if fractionformultiplication(((nbofbitfraction1+1)*2)-1) = '1' then
-                                     modulo := modulo + 1;
-                                    if modulo >= to_integer(shift_left(to_unsigned(1,nbofbitfractionaftermultiplication),to_integer(unsigned(es)))) then 
-                                    modulo := to_integer(shift_left(to_unsigned(1,nbofbitfractionaftermultiplication),to_integer(unsigned(es))));
-                                    end if;
-                                end if;
+                            if to_integer(signed( totalexponent_out)) >= 0 then
+                                
+                                regime_bit := '1';
+                                else
+                                regime_bit := '0';
+                                
+                            end if;
+                            
+                            
+                            
+                for i in (nbofbits -2 ) downto nbofbits-2-2  loop 
+                                
+                                      if flag_regime >0 then
+                                      
+                                           Posit5(i) := regime_bit;
+                                          
+                                      end if;
+                                      
+                                      flag_regime := flag_regime -1 ;
+                                      
+                                      if flag_regime = -1 then
+                                      
+                                   Posit5(i) := Not regime_bit;
+          
+                                      end if ;
+                                      
+                                      
+                                      
+                                      if flag_regime = -2 then
+                                      flag_exponent := to_integer(unsigned(es));
+                                       end if;
+                                      
+                                      
+                                      if flag_exponent >0 then
+                                          Posit5(i):= exponent_vector_out(nbofbits-1-counter);
+                                          counter := counter+1;
+                                          
+                                       end if;
+                                       
+                                       if flag_exponent /= -10 then
+                                       flag_exponent := flag_exponent -1;
+                                       end if;
+                                       
+                                          if flag_exponent = -1 then
+                                          flag_fraction:= to_integer(unsigned(nboffractionbits_out));
+                                          counter :=0;
+                                          end if;
+                                          
                                     
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        else
-                        
-                        
-                        
-                        fractionformultiplication  := std_logic_vector(unsigned(fractionformultiplicationn) - shift_left(to_unsigned(1, nbofbitsformultiplication),(nbofbitfraction2*2) ));
-                        nbofbitfractionaftermultiplication := (nbofbitfraction2+1)*2;
-                        posit3 := std_logic_vector(resize(shift_right(unsigned(fractionformultiplication((nbofbitfraction2*2)-1 downto 0)),(nbofbitfraction2*2)-nboffractionbits),nbofbits));
-                        
-                        
-                                                
-                                             for i in  0 to (nbofbitfractionaftermultiplication) loop
-                                                                   if to_integer(unsigned(fractionformultiplication)) <= to_integer(shift_left(to_unsigned(1,nbofbits),nbofbitfraction2*2)) then
-                                                                   
-                                                                   fractionformultiplication  := std_logic_vector(shift_left(unsigned(fractionformultiplication),1));
-                                                                   decrementexponent := decrementexponent + 1; -- used to decrement exponent in case my i cant subtract 2^16 from the fraction.
-                                                                   end if;
-                                                                   end loop;      
-                                                                   
-                                                     if decrementexponent >= to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1)) then
-                                                        decrementexponent := decrementexponent - to_integer(shift_left(to_unsigned(2,nbofbitsforinteger),to_integer(unsigned(es))-1));
-                                                              nbofregimebits := nbofregimebits +1;
-                                                              modulo := modulo - decrementexponent;
-                                                                nboffractionbits := nboffractionbits -1 ;
-                                                                else 
-                                                            modulo := modulo - decrementexponent;
-                                                               end if;
-                                                             if modulo <= 0 then 
-                                                           modulo := 0 ;
-                                                             end if;
+                                    if flag_fraction >0 then
+                               
+                                    Posit5(i) := fraction_vector_out(nbofbits-1-counter);
+                                    flag_fraction := flag_fraction -1 ;
+                                     counter := counter +1;
+                                    end if;
+                                    
+                                  
+                                    
+                                    
+                         end loop ;  
+                            flag_regime_out1 <= std_Logic_vector(to_signed(flag_regime,nbofbits));
+                            flag_exponent_out1 <= std_Logic_vector(to_signed( flag_exponent,nbofbits));
+                            flag_fraction_out1 <= std_Logic_vector(to_signed( flag_fraction,nbofbits));
+                            Posit5_Out1 <= Posit5;
+                            counter_out1 <= std_logic_vector(to_signed(counter,nbofbits));
+                            end if;
+  end process;                            
+                     
+                     
+                            
+process(CLK)                            
+                            
+
+  
+  
+  variable flag_regime : integer;
+  variable flag_exponent: integer;
+  variable flag_fraction : integer;
+ variable Posit5 : std_logic_vector(nbofbits - 2 downto 0 );
+  variable regime_bit : std_logic;
+  variable counter : integer;
+  begin
+  
+  
+  
+  if rising_edge(CLK) then
+  
+  
+          flag_regime := to_integer(signed( flag_regime_out1));
+          flag_exponent := to_integer(signed(flag_exponent_out1));
+          flag_fraction := to_integer(signed(flag_fraction_out1));
+          counter := to_integer(signed(counter_out1));
+          Posit5 := Posit5_Out1;
+  
+                              if to_integer(signed( totalexponent_out)) >= 0 then
+                                  
+                                  regime_bit := '1';
+                                  else
+                                  regime_bit := '0';
+                                  
+                              end if;
+                              
+                              
+                              
+                  for i in (nbofbits -5 ) downto nbofbits-7  loop 
+                                  
+                                        if flag_regime >0 then
+                                        
+                                             Posit5(i) := regime_bit;
                                             
-                                                   if fractionformultiplication(((nbofbitfraction2+1)*2)-1) = '1' then
-                                                    modulo := modulo + 1;
-                                                        if modulo >= to_integer(shift_left(to_unsigned(1,nbofbitfractionaftermultiplication),to_integer(unsigned(es)))) then 
-                                                        modulo := to_integer(shift_left(to_unsigned(1,nbofbitfractionaftermultiplication),to_integer(unsigned(es))));
-                                                        end if;
-                                                    end if;
-                                                        
-                        
-                        end if;
-
-
--- I need to check the upper  two most signifcant bits of fractionformultiplication after subtracting 2^16 for instace, if i am using 16 bits then 
---fractionformultiplication will be 18 bits so i need to check bit 18, if it is one i will incremenet my exponent , i will take the bits from 0 to 15
-
-
-
-
+                                        end if;
+                                        
+                                        flag_regime := flag_regime -1 ;
+                                        
+                                        if flag_regime = -1 then
+                                        
+                                     Posit5(i) := Not regime_bit;
+            
+                                        end if ;
+                                        
+                                        
+                                        
+                                        if flag_regime = -2 then
+                                        flag_exponent := to_integer(unsigned(es));
+                                         end if;
+                                        
+                                        
+                                        if flag_exponent >0 then
+                                            Posit5(i):= exponent_vector_out(nbofbits-1-counter);
+                                            counter := counter+1;
+                                            
+                                         end if;
+                                         
+                                         if flag_exponent /= -10 then
+                                         flag_exponent := flag_exponent -1;
+                                         end if;
+                                         
+                                            if flag_exponent = -1 then
+                                            flag_fraction := to_integer(unsigned(nboffractionbits_out));
+                                            counter :=0;
+                                            end if;
+                                            
+                                      
+                                      if flag_fraction >0 then
+                                 
+                                      Posit5(i) := fraction_vector_out(nbofbits-1-counter);
+                                      flag_fraction := flag_fraction -1 ;
+                                       counter := counter +1;
+                                      end if;
+                                      
+                                      
+                           end loop ;  
+                           
+                flag_regime_out2 <= std_Logic_vector(to_signed(flag_regime,nbofbits));
+                flag_exponent_out2 <= std_Logic_vector(to_signed( flag_exponent,nbofbits));
+                flag_fraction_out2 <= std_Logic_vector(to_signed( flag_fraction,nbofbits));
+                Posit5_Out2 <= Posit5;
+                counter_out2 <= std_logic_vector(to_signed(counter,nbofbits));
+                end if;
+    end process;   
+         
+         
+         
+         
+ process(CLK)                            
+                                
     
-                    if ( Posit1(nbofbits-1) = '0' and Posit2(nbofbits-1) = '0'  and totalexponentt >= 0) or (Posit1(nbofbits-1) = '1' and Posit2(nbofbits-1) = '1' and totalexponentt >= 0)  then
-                        Posit4 <= '0' & std_logic_vector(to_signed(1,nbofregimebits)) & '0' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nboffractionbits-1 downto 0 );
-                                       
-                                       
-                    elsif  (Posit1(nbofbits-1) ='0' and Posit2(nbofbits-1)='0' and totalexponentt < 0 ) or (Posit1(nbofbits-1) ='1' and Posit2(nbofbits-1)='1' and totalexponentt < 0) then
-                    
-                     Posit4 <= '0' & std_logic_vector(to_unsigned(0,nbofregimebits)) & '0' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nboffractionbits-1 downto 0 );
-                                   
-                    elsif  (Posit1(nbofbits-1) ='1' and Posit2(nbofbits-1)='0' and totalexponentt >= 0 ) or (Posit1(nbofbits-1) ='0' and Posit2(nbofbits-1)='1' and totalexponentt >= 0 )  then
-                    Posit4forinverse := '0' & std_logic_vector(to_unsigned(0,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nboffractionbits-1 downto 0 );
-                    Posit4 <= std_logic_vector( to_unsigned(to_integer(Not unsigned(Posit4forinverse)) + 1,nbofbits));
-                    else
-                    Posit4forinverse := '0' & std_logic_vector(to_signed(1,nbofregimebits)) & '1' & std_logic_vector(to_unsigned(modulo,to_integer(unsigned(es)))) & posit3(nboffractionbits-1 downto 0 );
-                    Posit4 <= std_logic_vector( to_unsigned(to_integer(Not unsigned(Posit4forinverse)) + 1,nbofbits));
-END IF ;
-end if;
-
-
-
-
-
-
-
-if (cases = "0000"  or cases = "0001") then
-
-
-
-
+      
+      
+      variable flag_regime : integer;
+      variable flag_exponent: integer;
+      variable flag_fraction : integer;
+      variable Posit5 : std_logic_vector(nbofbits - 2 downto 0 );
+      variable regime_bit : std_logic;
+      variable counter : integer;
+      begin
+      
+      
+      
+      if rising_edge(CLK) then
+      
+      
+              flag_regime := to_integer(signed( flag_regime_out2));
+              flag_exponent := to_integer(signed(flag_exponent_out2));
+              flag_fraction := to_integer(signed(flag_fraction_out2));
+              counter := to_integer(signed(counter_out2));
+              Posit5 := Posit5_Out2;
+      
+                                  if to_integer(signed( totalexponent_out)) >= 0 then
+                                      
+                                      regime_bit := '1';
+                                      else
+                                      regime_bit := '0';
+                                      
+                                  end if;
+                                  
+                                  
+                                  
+                      for i in (nbofbits-8 ) downto nbofbits-10  loop 
+                                      
+                                            if flag_regime >0 then
+                                            
+                                                 Posit5(i) := regime_bit;
+                                                
+                                            end if;
+                                            
+                                            flag_regime := flag_regime -1 ;
+                                            
+                                            if flag_regime = -1 then
+                                            
+                                         Posit5(i) := Not regime_bit;
                 
-            if flag1forexponent = '1' then
-                
-             expo1value := expo1value - to_integer(unsigned(howmuchtoshiftsubtract));
-        
-                if expo1value < 0 then
-                expo1value := 0 ;
-                end if;
+                                            end if ;
+                                            
+                                            
+                                            
+                                            if flag_regime = -2 then
+                                            flag_exponent := to_integer(unsigned(es));
+                                             end if;
+                                            
+                                            
+                                            if flag_exponent >0 then
+                                                Posit5(i):= exponent_vector_out(nbofbits-1-counter);
+                                                counter := counter+1;
+                                                
+                                             end if;
+                                             
+                                             if flag_exponent /= -10 then
+                                             flag_exponent := flag_exponent -1;
+                                             end if;
+                                             
+                                                if flag_exponent = -1 then
+                                                flag_fraction :=to_integer(signed(nboffractionbits_out));
+                                                counter :=0;
+                                                end if;
+                                                
+                                          
+                                          if flag_fraction >0 then
+                                     
+                                          Posit5(i) := fraction_vector_out(nbofbits-1-counter);
+                                          flag_fraction := flag_fraction -1 ;
+                                           counter := counter +1;
+                                          end if;
+                                          
+                                          
+                               end loop ;  
+                               
+                    flag_regime_out3 <= std_Logic_vector(to_signed(flag_regime,nbofbits));
+                    flag_exponent_out3 <= std_Logic_vector(to_signed( flag_exponent,nbofbits));
+                    flag_fraction_out3 <= std_Logic_vector(to_signed( flag_fraction,nbofbits));
+                    Posit5_Out3 <= Posit5;
+                    counter_out3 <= std_logic_vector(to_signed(counter,nbofbits));
+                    end if;
+        end process;   
+                     
+         
+         
+         
+         
+  process(CLK)                            
+                                       
+       
              
-            end if ;
-        
-            if flag2forexponent = '1' then
-            
-                expo2value := expo2value - to_integer(unsigned(howmuchtoshiftsubtract));
-        
-                if expo2value < 0 then
-                expo2value := 0 ;
-                end if;
-            end if;
-        exponent1 := std_logic_vector(to_unsigned(expo1value, nbofbitsforinteger+1 ));
-        exponent2 := std_logic_vector(to_unsigned(expo2value, nbofbitsforinteger+1));
-        
-            if (totalexponentt1>totalexponentt2)  and ( Positt3(nbofbitfraction1+1) = '1')  then --This means my fraction overflowed, so add one to the value of exponent
-                expo1value := expo1value+1 ; 
-                exponent1:= std_logic_vector(to_unsigned(expo1value, nbofbitsforinteger+1));
-                posit3 := std_logic_vector(shift_right(unsigned(Positt3),1));
-                if exponent1(nbofbitexponent1) = '1' then -- my exponent value overflowed so change exponent to a series of 1s and fractions too.
-                    posit3 := std_logic_vector(to_signed(-1,nbofbits));
-                    exponent1 := std_logic_vector(to_signed(-1,nbofbitsforinteger+1)); 
+             
+             variable flag_regime : integer;
+             variable flag_exponent: integer;
+             variable flag_fraction : integer;
+            variable Posit5 : std_logic_vector(nbofbits - 2 downto 0 );
+             variable regime_bit : std_logic;
+             variable counter :  integer;
+             begin
+             
+             
+             
+             if rising_edge(CLK) then
+             
+             
+                     flag_regime := to_integer(signed( flag_regime_out3));
+                     flag_exponent := to_integer(signed(flag_exponent_out3));
+                     flag_fraction := to_integer(signed(flag_fraction_out3));
+                     counter := to_integer(signed(counter_out3));
+                     Posit5 := Posit5_Out3;
+             
+                                         if to_integer(signed( totalexponent_out)) >= 0 then
+                                             
+                                             regime_bit := '1';
+                                             else
+                                             regime_bit := '0';
+                                             
+                                         end if;
+                                         
+                                         
+                                         
+                             for i in (nbofbits-11 ) downto nbofbits-13  loop 
+                                             
+                                                   if flag_regime >0 then
+                                                   
+                                                        Posit5(i) := regime_bit;
+                                                       
+                                                   end if;
+                                                   
+                                                   flag_regime := flag_regime -1 ;
+                                                   
+                                                   if flag_regime = -1 then
+                                                   
+                                                Posit5(i) := Not regime_bit;
+                       
+                                                   end if ;
+                                                   
+                                                   
+                                                   
+                                                   if flag_regime = -2 then
+                                                   flag_exponent := to_integer(unsigned(es));
+                                                    end if;
+                                                   
+                                                   
+                                                   if flag_exponent >0 then
+                                                       Posit5(i):= exponent_vector_out(nbofbits-1-counter);
+                                                       counter := counter+1;
+                                                       
+                                                    end if;
                                                     
-                    expo1value:=0 ;
-                end if;
-            end if;
-            
-            if (totalexponentt2>totalexponentt1)  and ( Positt3(nbofbitfraction2+1) = '1')  then --This means my fraction overflowed, so add one to the value of exponent
-                expo2value := expo2value+1 ; 
-                exponent2:= std_logic_vector(to_unsigned(expo2value, nbofbitsforinteger+1));
-                posit3 := std_logic_vector(shift_right(unsigned(Positt3),1));
-                if exponent2(nbofbitexponent2) = '1' then -- my exponent value overflowed so subtract one from fraction and add one to regime bits
-                    posit3 := std_logic_vector(to_signed(-1,nbofbits));
-                    exponent2 := std_logic_vector(to_signed(-1,nbofbitsforinteger+1));
-                    expo2value :=0;
-                end if;
-            end if;
-            
-            
-            if Posit1(nbofbits-2) ='0' and totalexponentt1 >=totalexponentt2  then
-                Posit4forinverse := '0' & std_logic_vector(to_unsigned(0,nbofregimebit1)) & '1' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1 downto 0 );
-                Posit4<= '0' & std_logic_vector(to_unsigned(0,nbofregimebit1)) & '1' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1 downto 0 );
-            end if;
-        
-        
-            if   Posit1(nbofbits-2) ='1' and totalexponentt1 >= totalexponentt2  then
-            Posit4forinverse :=  '0' & std_logic_vector(to_signed(-1,nbofregimebit1)) & '0' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1  downto 0 );
-                Posit4<= '0' & std_logic_vector(to_signed(-1,nbofregimebit1)) & '0' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1  downto 0 );
-            end if; 
-        
-        
-            if  Posit2(nbofbits-2) ='0' and totalexponentt2>totalexponentt1  then	
-                Posit4forinverse :='0' & std_logic_vector(to_unsigned(0,nbofregimebit2)) & '1' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
-                Posit4<= '0' & std_logic_vector(to_unsigned(0,nbofregimebit2)) & '1' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
-            end if; 
-        
-        
-        
-            if  Posit2(nbofbits-2) ='1' and totalexponentt2>totalexponentt1 then	
-                Posit4forinverse := '0' & std_logic_vector(to_signed(-1,nbofregimebit2)) & '0' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
-                Posit4<= '0' & std_logic_vector(to_signed(-1,nbofregimebit2)) & '0' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
-            end if; 
-            
-            
-            
-            
-            
-            
-               if Posit1(nbofbits-1) ='1' and Posit1(nbofbits-2) ='1' and totalexponentt1 >=totalexponentt2  then
+                                                    if flag_exponent /= -10 then
+                                                    flag_exponent := flag_exponent -1;
+                                                    end if;
+                                                    
+                                                       if flag_exponent = -1 then
+                                                       flag_fraction := to_integer(signed(nboffractionbits_out));
+                                                       counter :=0;
+                                                       end if;
+                                                       
+                                                 
+                                                 if flag_fraction >0 then
+                                            
+                                                 Posit5(i) := fraction_vector_out(nbofbits-1-counter);
+                                                 flag_fraction := flag_fraction -1 ;
+                                                  counter := counter +1;
+                                                 end if;
+                                                 
+                                                 
+                                      end loop ;  
+                                      
+                           flag_regime_out4 <= std_Logic_vector(to_signed(flag_regime,nbofbits));
+                           flag_exponent_out4 <= std_Logic_vector(to_signed( flag_exponent,nbofbits));
+                           flag_fraction_out4 <= std_Logic_vector(to_signed( flag_fraction,nbofbits));
+                           Posit5_Out4 <= Posit5;
+                           counter_out4 <= std_logic_vector(to_signed(counter,nbofbits));
+                           end if;
+               end process;   
+                        
+         
+  process(CLK)                            
+                                              
+               
                     
-                    Posit4forinverse:= '0' & std_logic_vector(to_unsigned(0,nbofregimebit1)) & '1' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1 downto 0 );
-                end if;
-            
-            
-                if  Posit1(nbofbits-1) ='1' and Posit1(nbofbits-2) ='0' and totalexponentt1 >= totalexponentt2  then
-                
-                   Posit4forinverse:='0' & std_logic_vector(to_signed(-1,nbofregimebit1)) & '0' & exponent1(nbofbitexponent1-1 downto 0 ) & Positt3(nbofbitfraction1-1  downto 0 );
-               end if; 
-            
-            
-                if Posit2(nbofbits-1) ='1' and Posit2(nbofbits-2) ='1' and totalexponentt2>totalexponentt1  then    
-                    Posit4forinverse:= '0' & std_logic_vector(to_unsigned(0,nbofregimebit2)) & '1' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
-                end if; 
-            
-            
-            
-                if Posit2(nbofbits-1) ='1' and Posit2(nbofbits-2) ='0' and totalexponentt2>totalexponentt1 then    
-                    Posit4forinverse:= '0' & std_logic_vector(to_signed(-1,nbofregimebit2)) & '0' & exponent2(nbofbitexponent2-1 downto 0 ) & Positt3(nbofbitfraction2 -1 downto 0 );
-                end if; 
-                
-                
-            if Posit1(nbofbits-1) ='1' and totalexponentt1>=totalexponentt2 then
-            Posit4 <= std_logic_vector (to_unsigned(to_integer( Not unsigned(Posit4forinverse))+1,nbofbits));
-            end if;
-                if Posit2(nbofbits-1) ='1' and totalexponentt2>totalexponentt1 then
-             Posit4 <= std_logic_vector (to_unsigned(to_integer( Not unsigned(Posit4forinverse))+1,nbofbits));
-                end if;
-                
-                if Flag1ForSubtraction ='1' then -- So this mean my PLU did B- A but my A is bigger, or A- B but B is bigger
-                 Posit4 <= std_logic_vector (to_unsigned(to_integer( Not unsigned(Posit4forinverse))+1,nbofbits));
-                end if;
-end if;
+                    
+                    variable flag_regime : integer;
+                    variable flag_exponent: integer;
+                    variable flag_fraction : integer;
+                   variable Posit5 : std_logic_vector(nbofbits - 2 downto 0 );
+                    variable regime_bit : std_logic;
+                    variable counter : integer;
+                    begin
+                    
+                    
+                    
+                    if rising_edge(CLK) then
+                    
+                    
+                            flag_regime := to_integer(signed( flag_regime_out4));
+                            flag_exponent := to_integer(signed(flag_exponent_out4));
+                            flag_fraction := to_integer(signed(flag_fraction_out4));
+                            counter := to_integer(signed(counter_out4));
+                            Posit5 := Posit5_Out4;
+                    
+                                                if to_integer(signed( totalexponent_out)) >= 0 then
+                                                    
+                                                    regime_bit := '1';
+                                                    else
+                                                    regime_bit := '0';
+                                                    
+                                                end if;
+                                                
+                                                
+                                                
+                                    for i in (nbofbits-2 -12 ) downto (nbofbits-nbofbits)  loop 
+                                                    
+                                                          if flag_regime >0 then
+                                                          
+                                                               Posit5(i) := regime_bit;
+                                                              
+                                                          end if;
+                                                          
+                                                          flag_regime := flag_regime -1 ;
+                                                          
+                                                          if flag_regime = -1 then
+                                                          
+                                                       Posit5(i) := Not regime_bit;
+                              
+                                                          end if ;
+                                                          
+                                                          
+                                                          
+                                                          if flag_regime = -2 then
+                                                          flag_exponent := to_integer(unsigned(es));
+                                                           end if;
+                                                          
+                                                          
+                                                          if flag_exponent >0 then
+                                                              Posit5(i):= exponent_vector_out(nbofbits-1-counter);
+                                                              counter := counter+1;
+                                                              
+                                                           end if;
+                                                           
+                                                           if flag_exponent /= -10 then
+                                                           flag_exponent := flag_exponent -1;
+                                                           end if;
+                                                           
+                                                              if flag_exponent = -1 then
+                                                              flag_fraction := to_integer(unsigned(nboffractionbits_out));
+                                                              counter :=0;
+                                                              end if;
+                                                              
+                                                        
+                                                        if flag_fraction >0 then
+                                                   
+                                                        Posit5(i) := fraction_vector_out(nbofbits-1-counter);
+                                                        flag_fraction := flag_fraction -1 ;
+                                                         counter := counter +1;
+                                                        end if;
+                                                        
+                                                        
+                                             end loop ;  
+                                             
+                                  flag_regime_out5 <= std_Logic_vector(to_signed(flag_regime,nbofbits));
+                                  flag_exponent_out5 <= std_Logic_vector(to_signed( flag_exponent,nbofbits));
+                                  flag_fraction_out5 <= std_Logic_vector(to_signed( flag_fraction,nbofbits));
+                                  Posit5_Out5 <= Posit5;
+                                  counter_out5 <= std_logic_vector(to_signed(counter,nbofbits));
+                                  end if;
+                      end process;   
+                               
+         
+        
+         
+         
+         
+         
+         
+         
+         
+  process(CLK) 
+  variable Posit5 : std_logic_vector(nbofbits - 2 downto 0 );
+  begin
+        if  rising_edge(CLK) then
+  
+          
+                      if Sign_out ='1' then
+                      
+                      Posit5 := std_logic_vector(to_unsigned(to_integer(Not unsigned( Posit5_Out5))+1,nbofbits-1));
+                      
+                      Posit4 <= Sign_out & Posit5 ;
+                      else 
+                       Posit5 := Posit5_Out5;
+
+                      end if;               
+                             
+                      if flagforinverse ='1' then -- this flagforinverse comes from A- B where B is > A or B-A where A > B
+                      Posit5 := std_logic_vector(to_unsigned(to_integer(Not unsigned( Posit5_Out5))+1,nbofbits-1));
+                       Posit4 <= (Not Sign_out) & Posit5 ;
+                      
+                      else
+                      
+                       Posit4 <= Sign_out & Posit5 ;
+                       
+                      end if;
+                     
+             end if;
+         
+      --   end if;                       
 end process;
 
 end Postprocessingarchi ;
