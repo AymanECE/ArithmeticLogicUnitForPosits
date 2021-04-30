@@ -5,111 +5,199 @@ use ieee.numeric_std.all;
 library work;
 use work.PLU_package.all;
 
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
-
-entity FullPLU_TB is
---  Port ( );
-end FullPLU_TB;
-
-architecture Behavioral of FullPLU_TB is
-component FullPLU
+entity FullPLU is
 port (              Posit1 : in std_logic_vector(nbofbits-1 downto 0 ); -- first posit
                    Posit2 : in std_logic_vector(nbofbits-1 downto 0);
                    nbofbitfractionn1: in std_logic_vector(nbofbitsforinteger downto 0);
                    nbofbitfractionn2: in std_logic_vector(nbofbitsforinteger downto 0);
                    nbofbitexponentt1: in std_logic_vector(nbofbitsforinteger downto 0);
                    nbofbitexponentt2: in std_logic_vector(nbofbitsforinteger downto 0);
-                   operation : in std_logic_vector( 2 downto 0 );
+                   operation: in std_logic_vector(2 downto 0 );
                    Posit4 : out std_logic_vector(nbofbits-1 downto 0 );
-                    es : in std_logic_vector(nbofbitsforinteger downto 0)
+                   es : in std_logic_vector(nbofbitsforinteger downto 0 );
+                   CLK : in std_logic;
+                   reset : in std_logic
                     );
-end component;
+end FullPLU;
 
-signal Posit1 :  std_logic_vector(nbofbits-1 downto 0 ); -- first posit
-signal                   Posit2 :  std_logic_vector(nbofbits-1 downto 0);
-signal                   nbofbitfractionn1:  std_logic_vector(nbofbitsforinteger downto 0);
-signal                   nbofbitfractionn2:  std_logic_vector(nbofbitsforinteger downto 0);
-signal                   nbofbitexponentt1:  std_logic_vector(nbofbitsforinteger downto 0);
-signal                   nbofbitexponentt2:  std_logic_vector(nbofbitsforinteger downto 0);
-signal                   operation:  std_logic_vector(2 downto 0 );
-signal                   Posit4 :  std_logic_vector(nbofbits-1 downto 0 );
-signal                   es : std_logic_vector(nbofbitsforinteger downto 0 );
+architecture Behavioral of FullPLU is
+
+
+
+
+component PreProcessing 
+
+port ( 
+		    Posit1 : in std_logic_vector(nbofbits-1 downto 0 ); -- first posit
+                   Posit2 : in std_logic_vector(nbofbits-1 downto 0);
+                   nbofbitfractionn1: in std_logic_vector(nbofbitsforinteger downto 0);
+                   nbofbitfractionn2: in std_logic_vector(nbofbitsforinteger downto 0);
+                   nbofbitexponentt1: in std_logic_vector(nbofbitsforinteger downto 0);
+                   nbofbitexponentt2: in std_logic_vector(nbofbitsforinteger downto 0);
+                   operation: in std_logic_vector( 2 downto 0 );
+                   cases: out std_logic_vector( 3 downto 0 ); 
+                   fraction1resizedshifteds : out std_logic_vector( nbofbits-1 downto 0);
+                   fraction2resizedshifteds : out std_logic_vector(nbofbits-1 downto 0 );
+                   totalexponentt1: out std_logic_vector(nbofbitsforinteger downto 0);
+                   totalexponentt2:out std_logic_vector(nbofbitsforinteger downto 0);
+                   expo1valuee: out std_logic_vector(nbofbitsforinteger downto 0);
+                   expo2valuee: out std_logic_vector(nbofbitsforinteger downto 0);
+                    nbofregimebitt1 : out  std_logic_vector(nbofbitsforinteger downto 0 ) ;
+                   nbofregimebitt2 : out std_logic_vector(nbofbitsforinteger downto 0 );
+                   es :in std_logic_vector(nbofbitsforinteger downto 0 ) ;
+                   CLK : in std_logic;
+                                      reset : in std_logic
+		);
+	end component;
+		
+component PLU
+        port (   nbofbitfractionn1 : in std_logic_vector( nbofbitsforinteger downto 0 );
+       nbofbitfractionn2 : in std_logic_vector( nbofbitsforinteger downto 0 );
+            cases : in std_logic_vector ( 3 downto 0 );                                                                
+            fraction1resizedshifted: in std_logic_vector ( nbofbits-1 downto 0);                                                     
+            fraction2resizedshifted : in std_logic_vector (nbofbits-1 downto 0 );                                                                                                               
+            PLU_Result : out std_logic_vector (nbofbits-1 downto 0);
+            flag1forexponent : out std_logic;
+            flag2forexponent : out std_logic         ;
+              howmuchtoshiftsubtract : out std_logic_vector ( nbofbits-1 downto 0 )  ;
+              Flag1ForSubtraction : out std_logic    ;
+                 totalexponent1 : in std_logic_vector(nbofbitsforinteger downto 0 );
+                   totalexponent2 : in std_logic_vector(nbofbitsforinteger downto 0 );
+         fractionformultiplicationn : out std_logic_vector(nbofbitsformultiplication -1 downto 0 );
+         operation : in std_logic_vector(2 downto 0 );
+         SquaredRoot : out std_logic_vector( 49 downto 0 );
+         CLK : in std_logic;
+                            reset : in std_logic;
+                            flagforinverse : out std_logic
+            );                                                                                                              
+            end component;  
+            
+
+            
+
+component PostProcessing
+           
+            port (  
+                    Posit1 : in std_logic_vector(nbofbits-1 downto 0);
+                    Posit2 : in std_logic_vector(nbofbits-1 downto 0);
+                    Positt3 : in std_logic_vector(nbofbits-1 downto 0); -- this just contains the fraction bit
+                    totalexponent1 : in std_logic_vector(nbofbitsforinteger downto 0 );
+                    totalexponent2 : in std_logic_vector(nbofbitsforinteger downto 0 );
+                    nbofbitfractionn1 : in std_logic_vector(nbofbitsforinteger downto 0);
+                    nbofbitfractionn2 : in std_logic_vector(nbofbitsforinteger downto 0);
+                    nbofbitexponentt1 : in std_logic_vector(nbofbitsforinteger downto 0);
+                    nbofbitexponentt2 : in std_logic_vector(nbofbitsforinteger downto 0);
+                    nbofregimebitt1 :in std_logic_vector(nbofbitsforinteger downto 0);
+                    nbofregimebitt2 : in std_logic_vector(nbofbitsforinteger downto 0);
+                    expo1valuee : in std_logic_vector(nbofbitsforinteger downto 0);
+                    expo2valuee : in std_logic_vector(nbofbitsforinteger downto 0);
+                    cases : in std_logic_vector ( 3 downto 0 );
+                    Posit4 : out std_logic_vector(nbofbits-1 downto 0 ) ;-- this is the final output
+                    flag1forexponent : in std_logic;
+                    flag2forexponent : in std_logic;
+                    howmuchtoshiftsubtract : in std_logic_vector ( nbofbits-1 downto 0 );
+                    Flag1ForSubtraction : in std_logic ;
+                 es : in std_logic_vector ( nbofbitsforinteger downto 0 );
+                  fractionformultiplicationn : in std_logic_vector(nbofbitsformultiplication -1 downto 0 );
+                  SquaredRoot : in std_logic_vector( 49 downto 0 );
+                  CLK : in std_logic;
+                                     reset : in std_logic;
+                                     flagforinverse : in std_logic
+                    );
+            end component; 
+            
+signal cases: std_logic_vector( 3 downto 0);                    
+signal expo1valuee : std_logic_vector ( nbofbitsforinteger downto 0 );
+signal expo2valuee: std_logic_vector ( nbofbitsforinteger downto 0 );   
+signal fraction1resizedshifteds : std_logic_vector(nbofbits-1 downto 0 );
+signal fraction2resizedshifteds : std_logic_vector(nbofbits-1 downto 0 );
+signal totalexponentt1: std_logic_vector(nbofbitsforinteger downto 0);
+signal totalexponentt2 : std_logic_vector(nbofbitsforinteger downto 0);
+signal PLU_Result: std_logic_vector(nbofbits-1 downto 0 );
+signal nbofregimebitt1 : std_logic_vector(nbofbitsforinteger downto 0 ) ;
+signal nbofregimebitt2:std_logic_vector(nbofbitsforinteger downto 0 );
+signal	flag1forexponent :  std_logic;
+signal flag2forexponent :  std_logic;
+signal howmuchtoshiftsubtract : std_logic_vector ( nbofbits-1 downto 0 );
+signal Flag1ForSubtraction : std_logic;
+signal fractionformultiplicationn : std_logic_vector(nbofbitsformultiplication -1 downto 0 );
+signal flagforinverse : std_logic;
+signal SquaredRoott : std_logic_vector( 49 downto 0 );
+
+
+
+
+
 begin
-U1 : FullPLU port map ( 
-                Posit1,
-                 Posit2,
-                 nbofbitfractionn1,
-                 nbofbitfractionn2,
-                 nbofbitexponentt1,
-                 nbofbitexponentt2,
-                 operation,
-                 Posit4 ,
-                 es);
-process
- begin
-        wait for 100ns;
-       --  Posit1 <=  "0111010100101011";
-       --  Posit2 <=   "0110010100010100"; 
-         --nbofbitfractionn1 <= "00000000000001000";
-        -- nbofbitfractionn2 <= "00000000000001001";
-        -- nbofbitexponentt2 <= "00000000000000011";
-        -- nbofbitexponentt1 <= "00000000000000011"; 
-        -- operation <= "010";     
-       --  es <="00000000000000011";
-        
-        
-        wait for 100ns;
-          Posit1 <=  "0111010100101011";
-         Posit2 <=   "0110010100010100"; 
-                nbofbitfractionn1 <= "00000000000001000";
-                nbofbitfractionn2 <= "00000000000001001";
-               nbofbitexponentt2 <= "00000000000000011";
-               nbofbitexponentt1 <= "00000000000000011"; 
-                operation <= "100";     
-               es <="00000000000000011";
-       
-       --nbofbitfractionn2 <= "00000000000000111";
-       --nbofbitfractionn1 <= "00000000000001000";
-       --nbofbitexponentt2 <= "00000000000000011";
-       --nbofbitexponentt1 <= "00000000000000011"; 
-       --add<='1';
-       
-        -- Posit1 <=  "1000111001110110";
-         --  Posit2 <=   "0111100101001011"; 
-             
-         --  nbofbitfractionn2 <= "00000000000000111";
-            -- nbofbitfractionn1 <= "00000000000001000";
-            -- nbofbitexponentt2 <= "00000000000000011";
-            -- nbofbitexponentt1 <= "00000000000000011"; 
-            -- add<='1';
-             
-                    --   Posit1 <=  "1000000000001000";
-                      -- Posit2 <=   "0111100101001011"; 
-                         
-                        -- nbofbitfractionn1 <= "00000000000000000";
-                        -- nbofbitfractionn2 <= "00000000000000111";
-                        -- nbofbitexponentt1 <= "00000000000000011";
-                        -- nbofbitexponentt2 <= "00000000000000011"; 
-                          --               es <="00000000000000011";
-                        -- add<='1';
-                    --Expected result is the same as Posit1.
-       wait for 100ns;
-      -- Posit1 <=          "0111101010001001";
-             -- Posit2 <=   "0111101010000101";   
-            --  nbofbitfractionn2 <= "00000000000000111";
-            --  nbofbitfractionn1 <= "00000000000000111";
-             -- nbofbitexponentt2 <= "00000000000000011";
-             -- nbofbitexponentt1 <= "00000000000000011"; 
-              --add<='0';
-             -- es <="00000000000000011";
-              wait;
-       end process;
+
+U1: PreProcessing port map (Posit1, -- first posit
+                   Posit2,  
+                   nbofbitfractionn1 ,
+                   nbofbitfractionn2,
+                   nbofbitexponentt1,
+                   nbofbitexponentt2,
+                   operation,
+                   cases,
+                   fraction1resizedshifteds,
+                   fraction2resizedshifteds,
+                   totalexponentt1,
+                   totalexponentt2,
+                   expo1valuee,
+                   expo2valuee,
+                   nbofregimebitt1,
+                   nbofregimebitt2,
+                   es,
+                   ClK,
+                   reset );
+                   
+ U2 : PLU port map (        nbofbitfractionn1,
+                            nbofbitfractionn2,
+                                cases,                                                             
+                              fraction1resizedshifteds,                                           
+                              fraction2resizedshifteds,                                                                                                            
+                              PLU_Result ,
+                              flag1forexponent,
+                              flag2forexponent,
+                              howmuchtoshiftsubtract,
+                              Flag1ForSubtraction ,
+                                 totalexponentt1 ,
+                                   totalexponentt2 ,
+                               fractionformultiplicationn,
+                               operation,
+                               SquaredRoott,
+                                                  ClK,
+                                                  reset,
+                                                  flagforinverse
+                              ); 
+
+ 
+U4 : PostProcessing port map (         Posit1,  
+                                       Posit2,  
+                                       PLU_Result,   -- this just contains the fraction bit
+                                       totalexponentt1, 
+                                       totalexponentt2, 
+                                       nbofbitfractionn1, 
+                                       nbofbitfractionn2, 
+                                       nbofbitexponentt1, 
+                                       nbofbitexponentt2,
+                                       nbofregimebitt1, 
+                                       nbofregimebitt2, 
+                                       expo1valuee, 
+                                       expo2valuee, 
+                                       cases, 
+                                       Posit4 ,
+                                       flag1forexponent,
+                                       flag2forexponent,
+                                       howmuchtoshiftsubtract,
+                                       Flag1ForSubtraction  ,
+                                       es ,
+                                        fractionformultiplicationn ,
+                                        SquaredRoott,
+                                                           ClK,
+                                                           reset,flagforinverse
+                                       );
+
+                                       
+
+
 end Behavioral;
