@@ -10,21 +10,7 @@ entity PreProcessing is
  
 port ( 
  
-    -- Posit1 : in std_logic_vector(nbofbits-1 downto 0 ); -- first posit
-		 --Posit2 : in std_logic_vector(nbofbits-1 downto 0);
-		 --nbofbitfractionn1: in unsigned(nbofbitsforinteger downto 0);
-		 -- --nbofbitfractionn2: in unsigned(nbofbitsforinteger downto 0);
-		 --nbofbitexponentt1: in unsigned(nbofbitsforinteger downto 0);
-		 --nbofbitexponentt2: in unsigned(nbofbitsforinteger downto 0);
-		 --add: in std_logic;
-		 --cases: out std_logic_vector( 2 downto 0 ); 
-		 --fraction1resizedshifted: out std_logic_vector( nbofbits-1 downto 0);
-		 --fraction2resizedshifted : out std_logic_vector(nbofbits-1 downto 0 );
-		 --operation: out std_logic_vector( 1 downto 0 );
-		 --totalexponentt1: out unsigned(nbofbitsforinteger downto 0);
-		 --totalexponentt2:out unsigned(nbofbitsforinteger downto 0);
-		 --expo1valuee: out unsigned(nbofbitsforinteger downto 0);
-		 --expo2valuee: out unsigned(nbofbitsforinteger downto 0)
+  
 		     Posit1 : in std_logic_vector(nbofbits-1 downto 0 ); -- first posit
            Posit2 : in std_logic_vector(nbofbits-1 downto 0);
            nbofbitfractionn1: in std_logic_vector(nbofbitsforinteger downto 0);
@@ -43,7 +29,9 @@ port (
            expo2valuee: out std_logic_vector(nbofbitsforinteger downto 0);
             nbofregimebitt1 : out std_logic_vector(nbofbitsforinteger downto 0 ) ;
             nbofregimebitt2 : out std_logic_vector(nbofbitsforinteger downto 0 );
-            es : in std_logic_vector(nbofbitsforinteger downto 0 )
+            es : in std_logic_vector(nbofbitsforinteger downto 0 );
+            CLK: in std_logic;
+            reset : in std_logic
 		);
 
 end PreProcessing;
@@ -54,6 +42,19 @@ signal Clock : std_logic := '0';
 signal two : std_logic_vector(nbofbits-1 downto 0 ) := x"0002";
 signal regime1value: std_logic_vector(nbofbits-1 downto 0 );
 signal regime2value: std_logic_vector(nbofbits-1 downto 0 );
+signal fraction1resizedshifted_Add : std_logic_vector ( nbofbits -1 downto 0 );
+signal fraction2resizedshifted_Add : std_logic_vector ( nbofbits -1 downto 0 );
+signal fraction1resizedshifted_Multiply : std_logic_vector ( nbofbits -1 downto 0 );
+signal fraction2resizedshifted_Multiply : std_logic_vector ( nbofbits -1 downto 0 );
+signal fraction1resizedshifted_Square : std_logic_vector ( nbofbits -1 downto 0 );
+signal fraction2resizedshifted_Square : std_logic_vector ( nbofbits -1 downto 0 );
+
+signal exponent1_out: std_logic_vector ( nbofbits-1 downto 0 );
+signal  exponent2_out: std_logic_vector( nbofbits-1 downto 0 );
+signal totalexponent1_out: std_logic_vector ( nbofbits-1 downto 0 );
+signal  totalexponent2_out: std_logic_vector( nbofbits-1 downto 0 );
+
+
 begin
 
 Clock <= not Clock after 1 ns; 
@@ -67,7 +68,7 @@ Clock <= not Clock after 1 ns;
 
 
 
-Process(Posit1,Posit2) --  In this process, I will calculate the shift needed to be done. Process will trigger when there is a change in the input
+Process(CLK) 
 
 variable exponent1: std_logic_vector ( nbofbits-1 downto 0 );
 variable  exponent2 : std_logic_vector( nbofbits-1 downto 0 );
@@ -75,41 +76,34 @@ variable  fraction1bits: std_logic_vector( nbofbits-1 downto 0);
 variable  fraction2bits: std_logic_vector (nbofbits-1 downto 0);
 variable  exponent1bits: std_logic_vector(nbofbits -1 downto 0 );
 variable  exponent2bits: std_logic_vector(nbofbits-1 downto 0);
-variable  nbofbitsregimee1:  std_logic_vector(nbofbitsforinteger downto 0);
-variable  nbofbitsregimee2:  std_logic_vector(nbofbitsforinteger downto 0);
+
 variable  posit1inversewithoutsign: std_logic_vector(nbofbits-1 downto 0 );
 variable  posit2inversewithoutsign: std_logic_vector( nbofbits-1 downto 0 );
-variable reg1 : integer :=0;
-variable reg2 : integer  :=0;
-variable reg11 :integer:=0;
-variable reg22 :integer:=0;
-variable nbofbitfraction1 :integer:=0;
-variable nbofbitfraction2 :integer:=0;
-variable nbofbitexponent1 :integer:=0;
-variable nbofbitexponent2 :integer:=0;
+
+variable nbofbitfraction1 :natural:=0;
+variable nbofbitfraction2 :natural:=0;
+variable nbofbitexponent1 :natural:=0;
+variable nbofbitexponent2 :natural:=0;
 variable nbofbitregimee1 : std_logic_vector(nbofbitsforinteger downto 0);
 variable nbofbitregimee2 : std_logic_vector(nbofbitsforinteger downto 0);
 variable totalexponent1 : integer:=0;
-variable totalexponent2 : integer:=0; 
+variable totalexponent2 : integer:=0;   
 variable expo1value :  integer:=0;
 variable expo2value : integer:=0;
-variable nbofbitss : integer:= nbofbitsforinteger ;
-variable nbofbitsregime1 : integer:=0;
-variable nbofbitsregime2 :integer:=0;
-
-variable regime1: std_logic_vector(nbofbits-1 downto 0);
-variable regime2 : std_logic_vector(nbofbits-1 downto 0 );
-variable fraction1resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
-variable fraction2resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
-
-variable var1 : unsigned(nbofbits-1 downto 0 );
+variable nbofbitss : natural:= nbofbitsforinteger ;
+variable nbofbitsregime1 : natural:=0;
+variable nbofbitsregime2 : natural:=0;
+variable var1 : std_logic_vector(nbofbits-1 downto 0 );
 
 variable reg111 : std_logic_vector ( nbofbits -1 downto 0 ):= (others => '0');
 variable reg222 : std_logic_vector(nbofbits-1 downto 0) := (others => '0');
 variable flag : std_logic;
+variable mask1 : std_logic_vector ( nbofbits -1 downto 0 );
+variable mask2 : std_logic_vector ( nbofbits -1 downto 0 );
 
 begin
 
+if rising_edge(CLK) then
 
 nbofbitfraction1 := to_integer(unsigned(nbofbitfractionn1));
 nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2));
@@ -124,189 +118,470 @@ nbofbitregimee2 :=std_logic_vector(to_unsigned(nbofbitsregime2,nbofbitsforintege
 
 
 
-
-
 if Posit1(nbofbits-1) ='1' then 
 
+mask1 := std_logic_vector(to_signed(-1,nbofbits));
+
+mask1 :=std_logic_vector( shift_right (unsigned(mask1),nbofbitfraction1));
+
+mask1 := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(nbofbits-1 -nbofbitsregime1-1-1)));
+
 posit1inversewithoutsign := std_logic_vector(to_unsigned(to_integer(unsigned((Not Posit1(nbofbits-1 downto 0 ))))+1 ,nbofbits)) ;
-var1 := resize(unsigned(posit1inversewithoutsign(nbofbits downto nbofbitfraction1)),nbofbits);
-exponent1 := std_logic_vector(var1);
+
+--exponent1 := std_logic_vector(resize(unsigned(posit1inversewithoutsign(nbofbits-1 -nbofbitsregime1-1-1 downto nbofbitfraction1)),nbofbits));
+
+exponent1 := std_logic_vector( shift_right(unsigned(posit1inversewithoutsign),nbofbitfraction1) and unsigned( mask1)); 
 
 else 
-exponent1 := std_logic_vector(resize(unsigned(Posit1( (nbofbits-1 -nbofbitsregime1-1-1) downto nbofbitfraction1)),nbofbits));
+
+
+mask1 := std_logic_vector(to_signed(-1,nbofbits));
+mask1 :=std_logic_vector( shift_right (unsigned(mask1),nbofbitfraction1));
+mask1 := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(nbofbits-1 -nbofbitsregime1-1-1)));
+
+--exponent1 := std_logic_vector(resize(unsigned(Posit1( nbofbits-1-nbofbitsregime1-1-1 downto nbofbitfraction1)),nbofbits));
+exponent1 := std_logic_vector( shift_right(unsigned(Posit1),nbofbitfraction1) and unsigned( mask1)); 
+
 end if;
+
 
 if Posit2(nbofbits-1) ='1' then
 posit2inversewithoutsign := std_logic_vector(to_unsigned(to_integer(unsigned((Not Posit2(nbofbits-1 downto 0 ))))+1 ,nbofbits)) ;
 --exponent2 := std_logic_vector(resize(unsigned(posit2inversewithoutsign( (nbofbits-1 -nbofbitsregime2-1-1) downto nbofbitfraction2)),nbofbits));
+
+mask1 := std_logic_vector(to_signed(-1,nbofbits));
+mask1 :=std_logic_vector( shift_right (unsigned(mask1),nbofbitfraction2));
+mask1 := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(nbofbits-1 -nbofbitsregime2-1-1)));
+
+
+exponent2 := std_logic_vector( shift_right(unsigned(posit2inversewithoutsign),nbofbitfraction2) and unsigned( mask1)); 
+
 else
-exponent2 := std_logic_vector(resize(unsigned(Posit2( (nbofbits-1 -nbofbitsregime2-1-1) downto nbofbitfraction2)),nbofbits));
+mask1 := std_logic_vector(to_signed(-1,nbofbits));
+mask1 :=std_logic_vector( shift_right (unsigned(mask1),nbofbitfraction2));
+mask1 := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(nbofbits-1 -nbofbitsregime2-1-1)));
+
+
+exponent2 := std_logic_vector( shift_right(unsigned(Posit2),nbofbitfraction2) and unsigned( mask1)); 
+--exponent2 := std_logic_vector(resize(unsigned(Posit2( (nbofbits-1 -nbofbitsregime2-1-1) downto nbofbitfraction2)),nbofbits));
+
+exponent1_out <= exponent1;
+exponent2_out <= exponent2;
+expo1valuee <= std_logic_vector(resize(unsigned(exponent1),17));
+expo2valuee <=std_logic_vector(resize(unsigned(exponent2),17));
+ nbofregimebitt1 <=nbofbitregimee1;
+ nbofregimebitt2 <=nbofbitregimee2;
 end if;
 
 
-expo1value := to_integer(unsigned(exponent1));
-expo2value := to_integer(unsigned(exponent2));
-
-
-
- 
-
---if ((nbofbitfraction1 /=0) and (nbofbitfraction2/=0)) then --This if part is for posits with fraction parts.
-	if Posit1(nbofbits-1) = '1' then  -- so posit1 is negative, need to use the inverse of it 
-		fraction1bits := std_logic_vector(resize(unsigned(posit1inversewithoutsign(nbofbitfraction1-1 downto 0 )),nbofbits));
-	else 
-		fraction1bits := std_logic_vector(resize(unsigned(Posit1(nbofbitfraction1-1 downto 0 )),nbofbits));
-	end if;
-
-
-	if Posit2(nbofbits-1) = '1' then
-		fraction2bits := std_logic_vector(resize(unsigned(posit2inversewithoutsign(nbofbitfraction2-1 downto 0 )),nbofbits));
-	else 
-		fraction2bits :=std_logic_vector(resize(unsigned( Posit2(nbofbitfraction2 -1 downto 0 )),nbofbits));
-	end if;
-	
-
-
-
- -- The below if statements calculate the regime value for P1 and P2.
-	if  Posit1(nbofbits-1)='0' then 
-	
-		reg111 := std_logic_vector(shift_left(unsigned(two),to_integer(unsigned(es))-1));
-
-		reg1:= to_integer(unsigned(reg111)) * nbofbitsregime1;
-	
-	end if;
-	
-	if  Posit2(nbofbits-1)='0' then
-				
-				reg222 := std_logic_vector(shift_left(unsigned(two),to_integer(unsigned(es))-1));
-			
-				reg2:= to_integer(unsigned(reg222)) * nbofbitsregime2;
-	
-	end if;
-	
-	if  Posit1(nbofbits-1)='1' then
-	
-	reg111 := std_logic_vector(shift_left(unsigned(two),to_integer(unsigned(es))-1));
-	  
-		reg1:= to_integer(unsigned(reg111)) * nbofbitsregime1;
-		
-		
-	end if;		
-
-
-	if Posit2(nbofbits-1)='1' then 
-				reg222 := std_logic_vector(shift_left(unsigned(two),to_integer(unsigned(es))-1));
-				--wait until flag ='1';
-				reg2:= to_integer(unsigned(reg222)) * nbofbitsregime2;
-				
-
-	end if;		
-	
-	
-	
-	
-	if Posit1(nbofbits-1) ='0' then 
-           if Posit1(nbofbits-2)='1' then
-                totalexponent1 :=( reg1 + expo1value );
-           else
-               totalexponent1 := (expo1value -reg1);
-            end if; 
-      
-      
-     else 
-            if posit1inversewithoutsign(nbofbits-2)= '1' then
-                totalexponent1 :=( reg1 + expo1value );
-                else
-                totalexponent1 := (expo1value -reg1);
-                end if;
-         end if;
-        
-	
-	if Posit2(nbofbits-1) ='0' then 
-                       if Posit2(nbofbits-2)='1' then
-                            totalexponent2 :=( reg2 + expo2value );
-                       else
-                           totalexponent2 := (expo1value -reg2);
-                        end if; 
-                  
-                  
-                 else 
-                        if posit2inversewithoutsign(nbofbits-2)= '1' then
-                            totalexponent2 :=( reg2 + expo2value );
-                            else
-                            totalexponent2 := (expo2value -reg2);
-                            end if;
-        end if;
-
-
-regime1value <= std_logic_vector(to_unsigned(reg1,nbofbits));
-regime2value<=std_logic_vector(to_unsigned(reg2,nbofbits));
-
-nbofregimebitt1 <= std_logic_vector(to_unsigned(nbofbitsregime1,nbofbitsforinteger+1) ) ;
-nbofregimebitt2 <= std_logic_vector(to_unsigned(nbofbitsregime2,nbofbitsforinteger+1) );
---end if; -- if either or both fraction bits are 0 then we can take care of this in ALU by using comparison. 
-
--- Now i need to see which number is smaller and do the shift
-if operation = "001" or operation= "000" then 
-
-if Posit1(nbofbits-1) = '0' then 
-fraction1resizedshifted :=std_logic_vector(resize( unsigned(Posit1(nbofbitfraction1-1 downto 0 )),nbofbits));
-else
-fraction1resizedshifted :=std_logic_vector(resize( unsigned(posit1inversewithoutsign(nbofbitfraction1-1 downto 0 )),nbofbits));
-end if;
-
-
-if Posit2(nbofbits-1) = '0' then
-
-fraction2resizedshifted :=std_logic_vector(resize(unsigned(Posit2(nbofbitfraction2-1 downto 0)),nbofbits));
-else
-fraction2resizedshifted :=std_logic_vector(resize( unsigned(posit2inversewithoutsign(nbofbitfraction2-1 downto 0 )),nbofbits));
 
 end if;
-
-
-if(totalexponent1>=totalexponent2) then
-	
-fraction2resizedshifted :=std_logic_vector( unsigned(fraction2resizedshifted) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction2));
-
-fraction2resizedshifted := std_logic_vector(shift_right(unsigned(fraction2resizedshifted),totalexponent1-totalexponent2-(nbofbitfraction1-nbofbitfraction2)));
-
-else 
-
-fraction1resizedshifted := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction1));
-
-fraction1resizedshifted := std_logic_vector(shift_right(unsigned(fraction1resizedshifted),totalexponent2-totalexponent1 - (nbofbitfraction2-nbofbitfraction1)));
-
-end if;
-
-
-else -- This part is for multiplication and division where i will do 1 + FA  and 1 + FB, and multiply later on.
-
-if nbofbitfraction2 >= nbofbitfraction1 then 
-    fraction2resizedshifted := std_logic_vector(resize(unsigned(Posit2(nbofbitfraction2-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction2),nbofbits));
-    fraction2resizedshifted := std_logic_vector(shift_right(unsigned(fraction2resizedshifted),nbofbitfraction2-nbofbitfraction1)); 
-    fraction1resizedshifted := std_logic_vector( resize(unsigned(Posit1(nbofbitfraction1-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction1),nbofbits));
-else
-    fraction1resizedshifted := std_logic_vector(resize(unsigned(Posit1(nbofbitfraction1-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction1),nbofbits));
-    fraction1resizedshifted := std_logic_vector(shift_right(unsigned(fraction1resizedshifted),nbofbitfraction1-nbofbitfraction2)); 
-    fraction2resizedshifted := std_logic_vector(resize( unsigned(Posit2(nbofbitfraction2-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction2),nbofbits));
-end if;
-
-
-end if; 
-
-
-fraction1resizedshifteds <= fraction1resizedshifted;
-fraction2resizedshifteds <= fraction2resizedshifted;
-expo1valuee<=std_logic_vector(to_unsigned(expo1value,nbofbitsforinteger+1));
-expo2valuee<=std_logic_vector(to_unsigned(expo2value,nbofbitsforinteger+1));
-totalexponentt1 <=std_logic_vector(to_signed(totalexponent1,nbofbitsforinteger+1));
-totalexponentt2 <=std_logic_vector(to_signed(totalexponent2,nbofbitsforinteger+1));
 
 end process;
 
-process(Posit1,Posit2,operation)
+
+
+
+
+
+
+
+Process(CLK)
+variable exponent1: std_logic_vector ( nbofbits-1 downto 0 );
+variable  fraction1bits: std_logic_vector( nbofbits-1 downto 0);
+variable  exponent1bits: std_logic_vector(nbofbits -1 downto 0 );
+variable  nbofbitsregimee1:  std_logic_vector(nbofbitsforinteger downto 0);
+variable  posit1inversewithoutsign: std_logic_vector(nbofbits-1 downto 0 );
+variable reg1 : integer :=0;
+variable reg11 :integer:=0;
+variable nbofbitfraction1 :natural:=0;
+variable nbofbitexponent1 :natural:=0;
+variable nbofbitregimee1 : std_logic_vector(nbofbitsforinteger downto 0);
+variable totalexponent1 : integer:=0;
+variable expo1value :  integer:=0;
+variable nbofbitsregime1 : natural:=0;
+variable regime1: std_logic_vector(nbofbits-1 downto 0);
+variable fraction1resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
+variable var1 : std_logic_vector(nbofbits-1 downto 0 );
+variable reg111 : std_logic_vector ( nbofbits -1 downto 0 ):= (others => '0');
+variable mask1 : std_logic_vector ( nbofbits -1 downto 0 );
+
+begin 
+
+if rising_edge(CLK) then
+
+
+posit1inversewithoutsign := std_logic_vector(to_unsigned(to_integer(unsigned((Not Posit1(nbofbits-1 downto 0 ))))+1 ,nbofbits)) ;
+nbofbitfraction1 := to_integer(unsigned(nbofbitfractionn1));
+
+nbofbitexponent1 := to_integer(unsigned(nbofbitexponentt1));
+
+
+
+nbofbitsregime1 := nbofbits -1 - nbofbitfraction1 - nbofbitexponent1-1;
+
+nbofbitregimee1 :=std_logic_vector(to_unsigned(nbofbitsregime1,nbofbitsforinteger+1));
+
+
+
+expo1value := to_integer(unsigned(exponent1_out));
+
+reg111 := std_logic_vector(shift_left(unsigned(two),to_integer(unsigned(es))-1));
+
+		reg1:= to_integer(unsigned(reg111)) * nbofbitsregime1;
+
+--if ((nbofbitfraction1 /=0) and (nbofbitfraction2/=0)) then --This if part is for posits with fraction parts.
+	if Posit1(nbofbits-1) = '1' then  -- so posit1 is negative, need to use the inverse of it 
+	
+	   mask1 := std_logic_vector(to_signed(-1,nbofbits));
+	   mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(nbofbitfraction1-1)));   
+	   fraction1bits := std_logic_vector(unsigned(mask1) and unsigned(posit1inversewithoutsign)); 
+		--fraction1bits := std_logic_vector(resize(unsigned(posit1inversewithoutsign(nbofbitfraction1-1 downto 0 )),nbofbits));
+		
+		if posit1inversewithoutsign(nbofbits-2)= '1' then
+                                totalexponent1 :=( reg1 + expo1value );
+                                else
+                                totalexponent1 := (expo1value -reg1);
+                                end if;
+	else 
+	
+	
+	        mask1 := std_logic_vector(to_signed(-1,nbofbits));
+           mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(nbofbitfraction1-1)));
+		--fraction1bits := std_logic_vector(resize(unsigned(Posit1(nbofbitfraction1-1 downto 0 )),nbofbits));
+           fraction1bits := std_logic_vector(unsigned(mask1) and unsigned(Posit1));
+             if Posit1(nbofbits-2)='1' then
+                                 totalexponent1 :=( reg1 + expo1value );
+                            else
+                                totalexponent1 := (expo1value -reg1);
+                             end if; 
+	end if;
+
+ -- The below if statements calculate the regime value for P1 and P2.
+	
+	
+		
+
+                
+	regime1value <= std_logic_vector(to_unsigned(reg1,nbofbits));
+	totalexponent1_out <= std_Logic_vector(to_signed(totalexponent1,nbofbits));
+     totalexponentt1 <=std_Logic_vector(to_signed(totalexponent1,nbofbits+1));
+	
+	end if;
+	
+	end process;
+	
+	
+process(CLK)
+
+variable exponent2: std_logic_vector ( nbofbits-1 downto 0 );
+variable  fraction2bits: std_logic_vector( nbofbits-1 downto 0);
+variable  exponent2bits: std_logic_vector(nbofbits -1 downto 0 );
+variable  nbofbitsregimee2:  std_logic_vector(nbofbitsforinteger downto 0);
+variable  posit2inversewithoutsign: std_logic_vector(nbofbits-1 downto 0 );
+variable reg2 : integer :=0;
+variable reg22 :integer:=0;
+variable nbofbitfraction2 :natural:=0;
+variable nbofbitexponent2 :natural:=0;
+variable nbofbitregimee2 : std_logic_vector(nbofbitsforinteger downto 0);
+variable totalexponent2 : integer:=0;
+variable expo2value :  integer:=0;
+variable nbofbitsregime2 : natural:=0;
+variable regime2: std_logic_vector(nbofbits-1 downto 0);
+variable fraction1resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
+variable var1 : std_logic_vector(nbofbits-1 downto 0 );
+variable reg222 : std_logic_vector ( nbofbits -1 downto 0 ):= (others => '0');
+variable mask1 : std_logic_vector ( nbofbits -1 downto 0 );
+
+	begin
+	if rising_edge(CLK) then
+	
+	
+    posit2inversewithoutsign := std_logic_vector(to_unsigned(to_integer(unsigned((Not Posit2(nbofbits-1 downto 0 ))))+1 ,nbofbits)) ;
+    nbofbitfraction2 := to_integer(unsigned(nbofbitfractionn2));
+    
+    nbofbitexponent2 := to_integer(unsigned(nbofbitexponentt2));
+    
+    
+    
+    nbofbitsregime2 := nbofbits -1 - nbofbitfraction2 - nbofbitexponent2-1;
+    
+    nbofbitregimee2 :=std_logic_vector(to_unsigned(nbofbitsregime2,nbofbitsforinteger+1));
+
+	expo2value := to_integer(unsigned(exponent2_out));
+
+
+        
+        reg222 := std_logic_vector(shift_left(unsigned(two),to_integer(unsigned(es))-1));
+            
+        reg2:= to_integer(unsigned(reg222)) * nbofbitsregime2;
+        
+	
+	if Posit2(nbofbits-1) = '1' then
+	      mask1 := std_logic_vector(to_signed(-1,nbofbits));
+        mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn2))-1)));
+         fraction2bits := std_logic_vector(unsigned(mask1) and unsigned(posit2inversewithoutsign));
+		--fraction2bits := std_logic_vector(resize(unsigned(posit2inversewithoutsign(nbofbitfraction2-1 downto 0 )),nbofbits));
+		
+          if posit2inversewithoutsign(nbofbits-2)= '1' then
+                                   totalexponent2 :=( reg2 + expo2value );
+                                   else
+                                   totalexponent2 := (expo2value -reg2);
+                                   end if;
+	else 
+	
+	
+	 mask1 := std_logic_vector(to_signed(-1,nbofbits));
+           mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn2))-1)));
+	        fraction2bits := std_logic_vector(unsigned(mask1) and unsigned(Posit2));
+		--fraction2bits :=std_logic_vector(resize(unsigned( Posit2(nbofbitfraction2 -1 downto 0 )),nbofbits));
+		
+                    if Posit2(nbofbits-2)='1' then
+                                  totalexponent2 :=( reg2 + expo2value );
+                             else
+                                 totalexponent2 := (expo2value -reg2);
+                              end if; 
+                        
+	end if;
+	
+	
+ -- The below if statements calculate the regime value for P1 and P2.
+	
+				
+	
+
+	
+
+regime2value<=std_logic_vector(to_unsigned(reg2,nbofbits));
+totalexponent2_out <= std_Logic_vector(to_unsigned(totalexponent2,nbofbits));
+ totalexponentt2 <=std_Logic_vector(to_signed(totalexponent2,nbofbits+1));
+end if;
+end process;
+
+
+
+
+process (CLK) 
+
+variable mask1 : std_logic_vector ( nbofbits -1 downto 0 );
+variable fraction1resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
+variable fraction2resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
+
+variable  posit1inversewithoutsign: std_logic_vector(nbofbits-1 downto 0 );
+variable  posit2inversewithoutsign: std_logic_vector( nbofbits-1 downto 0 );
+begin
+
+
+
+if rising_edge(CLK) then
+
+
+if operation = "001" or operation= "000" then -- ADD/ SUBTRACT
+            posit1inversewithoutsign := std_logic_vector(to_unsigned(to_integer(unsigned((Not Posit1(nbofbits-1 downto 0 ))))+1 ,nbofbits)) ;
+            posit2inversewithoutsign := std_logic_vector(to_unsigned(to_integer(unsigned((Not Posit2(nbofbits-1 downto 0 ))))+1 ,nbofbits)) ;
+            
+            
+            
+            if Posit1(nbofbits-1) = '0' then 
+                 mask1 := std_logic_vector(to_signed(-1,nbofbits));
+                  mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn1))-1)));
+                  fraction1resizedshifted :=std_logic_vector(unsigned( mask1) and unsigned( Posit1));
+            --fraction1resizedshifted :=std_logic_vector(resize( unsigned(Posit1(nbofbitfraction1-1 downto 0 )),nbofbits));
+            else
+                 mask1 := std_logic_vector(to_signed(-1,nbofbits));
+                 mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn1))-1)));
+                 fraction1resizedshifted :=std_logic_vector(unsigned( mask1) and unsigned( posit1inversewithoutsign));
+          -- fraction1resizedshifted :=std_logic_vector(resize( unsigned(posit1inversewithoutsign(nbofbitfraction1-1 downto 0 )),nbofbits));
+            end if;
+            
+            
+            if Posit2(nbofbits-1) = '0' then
+                 mask1 := std_logic_vector(to_signed(-1,nbofbits));
+                mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn2))-1)));
+           -- fraction2resizedshifted :=std_logic_vector(resize(unsigned(Posit2(nbofbitfraction2-1 downto 0)),nbofbits));
+           
+             fraction2resizedshifted :=std_logic_vector(unsigned( mask1) and unsigned( Posit2));
+            else
+                mask1 := std_logic_vector(to_signed(-1,nbofbits));
+              mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn2))-1)));
+           -- fraction2resizedshifted :=std_logic_vector(resize( unsigned(posit2inversewithoutsign(nbofbitfraction2-1 downto 0 )),nbofbits));
+            fraction2resizedshifted :=std_logic_vector(unsigned( mask1) and unsigned( posit2inversewithoutsign));
+            end if;
+            
+            
+            if signed(totalexponent1_out)>= signed(totalexponent2_out) then
+                
+            fraction2resizedshifted :=std_logic_vector( unsigned(fraction2resizedshifted) + shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn2))));
+            
+            fraction2resizedshifted := std_logic_vector(shift_right(unsigned(fraction2resizedshifted),to_integer(unsigned(totalexponent1_out))-to_integer(unsigned(totalexponent2_out))-(to_integer(unsigned(nbofbitfractionn1))-to_integer(unsigned(nbofbitfractionn2)))));
+            
+            else 
+            
+            fraction1resizedshifted := std_logic_vector(unsigned(fraction1resizedshifted) + shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn1))));
+            
+            fraction1resizedshifted := std_logic_vector(shift_right(unsigned(fraction1resizedshifted),to_integer(unsigned(totalexponent2_out))-to_integer(unsigned(totalexponent1_out)) - (to_integer(unsigned(nbofbitfractionn2))-to_integer(unsigned(nbofbitfractionn1)))));
+            
+            end if;
+            
+           fraction1resizedshifted_Add <=fraction1resizedshifted ;
+           fraction2resizedshifted_Add <= fraction2resizedshifted;
+
+
+end if;
+
+end if;
+end process;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+process (CLK) 
+
+variable var1 : std_logic_vector(nbofbits-1 downto 0 );
+variable mask1 : std_logic_vector ( nbofbits -1 downto 0 );
+variable fraction1resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
+variable fraction2resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
+
+begin
+
+
+
+
+
+if rising_edge(CLK) then
+
+if operation = "010" or operation ="100" then 
+
+ -- This part is for multiplication  and division where i will do 1 + FA  and 1 + FB, and multiply later on.
+
+      
+        if unsigned(nbofbitfractionn2 )>= unsigned(nbofbitfractionn1) then 
+            mask1 := std_logic_vector(to_signed(-1,nbofbits));
+             mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn2))-1)));
+             var1 := std_logic_vector(unsigned(Posit2) and unsigned(mask1));
+            --fraction2resizedshifted := std_logic_vector(resize(unsigned(Posit2(nbofbitfraction2-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction2),nbofbits));
+            fraction2resizedshifted := std_logic_vector(unsigned(var1) + shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn2))));
+            
+            fraction2resizedshifted := std_logic_vector(shift_right(unsigned(fraction2resizedshifted),to_integer(unsigned(nbofbitfractionn2))-to_integer(unsigned(nbofbitfractionn1)))); 
+             mask1 := std_logic_vector(to_signed(-1,nbofbits));
+                        mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn1))-1)));
+                        var1 := std_logic_vector(unsigned(Posit1) and unsigned(mask1));
+            
+            --fraction1resizedshifted := std_logic_vector( resize(unsigned(Posit1(nbofbitfraction1-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction1),nbofbits));
+            fraction1resizedshifted := std_logic_vector( unsigned(var1) + shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn1))));
+            
+        else
+        
+         mask1 := std_logic_vector(to_signed(-1,nbofbits));
+                    mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn1))-1)));
+                    var1 := std_logic_vector(unsigned(Posit1) and unsigned(mask1));
+           -- fraction1resizedshifted := std_logic_vector(resize(unsigned(Posit1(nbofbitfraction1-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction1),nbofbits));
+           fraction1resizedshifted := std_logic_vector(unsigned(var1) + shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn1))));
+            
+            fraction1resizedshifted := std_logic_vector(shift_right(unsigned(fraction1resizedshifted),to_integer(unsigned(nbofbitfractionn1))-to_integer(unsigned(nbofbitfractionn2)))); 
+            mask1 := std_logic_vector(to_signed(-1,nbofbits));
+            mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn2))-1)));
+            var1 := std_logic_vector(unsigned(Posit2) and unsigned(mask1));
+           -- fraction2resizedshifted := std_logic_vector(resize( unsigned(Posit2(nbofbitfraction2-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction2),nbofbits));
+           fraction2resizedshifted := std_logic_vector( unsigned(var1) + shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn2))));
+        end if;
+        
+        fraction1resizedshifted_Multiply <= fraction1resizedshifted;
+        fraction2resizedshifted_Multiply <= fraction2resizedshifted;
+        
+ end if;
+ end if;
+ end process;
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ process(CLK)
+ 
+ variable mask1 : std_logic_vector ( nbofbits -1 downto 0 );
+ variable var1 : std_logic_vector(nbofbits-1 downto 0 );
+ variable fraction1resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
+ variable fraction2resizedshifted : std_logic_vector(nbofbits -1 downto 0 );
+ begin
+ 
+ if rising_edge(CLK) then
+ 
+  
+ if operation ="101"  then -- This is  square root, fraction2resizedshifted is just to put an output
+     mask1 := std_logic_vector(to_signed(-1,nbofbits));
+                       mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn1))-1)));
+                       var1 := std_logic_vector(unsigned(Posit1) and unsigned(mask1));
+    -- fraction1resizedshifted := std_logic_vector(resize(unsigned(Posit1(nbofbitfraction1-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction1),nbofbits));
+    fraction1resizedshifted := std_logic_vector(unsigned(var1) + shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn1))));
+      mask1 := std_logic_vector(to_signed(-1,nbofbits));
+                      mask1  := std_logic_vector(shift_right(unsigned(mask1),nbofbits-1-(to_integer(unsigned(nbofbitfractionn2))-1)));
+                      var1 := std_logic_vector(unsigned(Posit2) and unsigned(mask1));
+     --fraction2resizedshifted := std_logic_vector(resize(unsigned(Posit2(nbofbitfraction1-1 downto 0 )) + shift_left(to_unsigned(1,nbofbits),nbofbitfraction1),nbofbits));
+        fraction2resizedshifted := std_logic_vector(unsigned(var1) + shift_left(to_unsigned(1,nbofbits),to_integer(unsigned(nbofbitfractionn2))));
+    
+    fraction1resizedshifted_Square <= fraction1resizedshifted;
+    fraction2resizedshifted_Square <=fraction2resizedshifted;
+end if;
+
+end if;
+
+end process;
+
+process ( CLK)
+begin
+
+if rising_edge(CLK) then
+
+if operation = "001" or operation= "000" then 
+
+fraction1resizedshifteds <= fraction1resizedshifted_Add;
+fraction2resizedshifteds <= fraction2resizedshifted_Add;
+
+elsif operation = "010" or operation ="100" then 
+
+fraction1resizedshifteds <= fraction1resizedshifted_Multiply;
+fraction2resizedshifteds <= fraction2resizedshifted_Multiply;
+
+else
+
+
+fraction1resizedshifteds <= fraction1resizedshifted_Square;
+fraction2resizedshifteds <= fraction2resizedshifted_Square;
+
+
+
+end if;
+end if;
+
+end process;
+
+
+
+
+
+
+
+
+
+
+
+process(CLK)
 variable signP1P2OP : std_logic_vector(4 downto 0 );
 begin
 signP1P2OP := Posit1(nbofbits-1) & Posit2(nbofbits-1) & operation;
@@ -323,9 +598,13 @@ Case signP1P2OP Is
     WHEN "11001" => cases <= "0000";-- -A - B
     When "11010" | "00010" | "01010" | "10010" => cases <= "0100"; -- This is multiply since operation is 010
     When "11100" | "00100" | "01100" | "10100" => cases <= "1000" ; -- this is division
-    WHEN OTHERS => cases <= "1111";
+    WHEN OTHERS => cases <= "1111";  -- this is square root operation is 101
 	
-
+-- 100 is division
+-- others is square root
+-- 000 add
+-- 001 subtract
+--010 multiply
 End case;
 end process;
 end Behavioralpp;
